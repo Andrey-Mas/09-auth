@@ -4,21 +4,13 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { fetchNotes } from "@/lib/api/clientApi"; // ← беремо прямо з clientApi, щоб не було плутанини з типами
+import { fetchNotes } from "@/lib/api/clientApi";
 import type { Tag, Note, PaginatedNotes } from "@/types";
 import listCss from "@/components/NoteList/NoteList.module.css";
 
-// Локальний тип параметрів, щоб точно був search/page/perPage/tag
-type FetchParams = {
-  search?: string;
-  tag?: Tag;
-  page?: number;
-  perPage?: number;
-};
-
 type Props = {
   tag?: Tag | "All";
-  notes?: Note[]; // опційно (для сумісності), не обов’язково використовувати
+  notes?: Note[];
   page?: number;
   query?: string;
   from?: string;
@@ -33,7 +25,6 @@ export default function NotesClient(props: Props) {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // Обчислюємо активний тег з пропса або з URL
   const currentTag: Tag | "All" = useMemo(() => {
     if (tagProp) return tagProp;
     const m = pathname?.match(/\/notes\/filter\/([^/]+)/i);
@@ -59,7 +50,6 @@ export default function NotesClient(props: Props) {
     return "All";
   }, [pathname, tagProp]);
 
-  // Пошук + сторінка з query string
   const [search, setSearch] = useState<string>(
     sp.get("search") ?? queryProp ?? "",
   );
@@ -68,7 +58,6 @@ export default function NotesClient(props: Props) {
     return Number.isFinite(p) && p > 0 ? p : 1;
   }, [sp, pageProp]);
 
-  // Синхронізуємо інпут, якщо URL змінився ззовні
   useEffect(() => {
     setSearch(sp.get("search") ?? queryProp ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,18 +68,15 @@ export default function NotesClient(props: Props) {
       ? "/notes/filter/All"
       : `/notes/filter/${encodeURIComponent(currentTag)}`;
 
-  // Параметри для API — локально типізовані, тому 'search' точно існує в типі
-  const params: FetchParams = {
-    tag: currentTag === "All" ? undefined : (currentTag as Tag),
-    page,
-    perPage: PER_PAGE,
-    search: search || undefined,
-  };
-
-  // Запит нотаток
   const { data, isPending, error } = useQuery<PaginatedNotes>({
-    queryKey: ["notes", params],
-    queryFn: async () => fetchNotes(params as any), // cast на випадок старих сигнатур
+    queryKey: ["notes", { tag: currentTag, page, search }],
+    queryFn: () =>
+      fetchNotes({
+        tag: currentTag === "All" ? undefined : (currentTag as Tag),
+        page,
+        perPage: PER_PAGE,
+        search: search || undefined,
+      } as any),
     placeholderData: (prev) => prev,
     staleTime: 5_000,
   });
@@ -113,7 +99,6 @@ export default function NotesClient(props: Props) {
 
   return (
     <main style={{ padding: 24 }}>
-      {/* Заголовок + Create */}
       <div className={listCss.title}>
         <span>Notes {currentTag !== "All" ? `— ${currentTag}` : ""}</span>
         <Link
@@ -126,7 +111,6 @@ export default function NotesClient(props: Props) {
         </Link>
       </div>
 
-      {/* Пошук */}
       <form onSubmit={onSearchSubmit} className={listCss.controls}>
         <input
           className={listCss.searchInput}
@@ -140,7 +124,6 @@ export default function NotesClient(props: Props) {
         </button>
       </form>
 
-      {/* Стан */}
       {isPending && <p className={listCss.info}>Loading…</p>}
       {error && (
         <p className={listCss.error}>
@@ -148,7 +131,6 @@ export default function NotesClient(props: Props) {
         </p>
       )}
 
-      {/* Список */}
       {data && (
         <ul className={listCss.list}>
           {data.items.map((n) => (
@@ -193,12 +175,10 @@ export default function NotesClient(props: Props) {
         </ul>
       )}
 
-      {/* Порожньо */}
       {data && data.items.length === 0 && (
         <p className={listCss.info}>No notes found.</p>
       )}
 
-      {/* Пагінація */}
       {data && data.totalPages > 1 && (
         <div className={listCss.pagination}>
           <button

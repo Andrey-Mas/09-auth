@@ -70,3 +70,4 @@ export type UITagOption = (typeof TAGS_UI)[number];
 
 /** Значення тега для UI (рядок) */
 export type UITag = UITagOption["value"];
+// types/note.ts
