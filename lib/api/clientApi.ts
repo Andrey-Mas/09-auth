@@ -109,3 +109,4 @@ export async function deleteNote(id: string): Promise<void> {
 
 /* aliases на випадок старих імпортів */
 export { getMe as getMeClient, updateMe as updateMeClient };
+export { getNotes as fetchNotes };
