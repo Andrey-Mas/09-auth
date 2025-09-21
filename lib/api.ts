@@ -72,7 +72,7 @@ function normalizeNotesResponse(raw: any, perPage: number): FetchNotesResponse {
           Math.ceil((total || items.length) / (limit || perPage || 1)),
         );
 
-  return { items, total, page, limit, totalPages };
+  return { items, totalItems: total, page, perPage: limit, totalPages };
 }
 
 /* ===== Adaptive param selection (окремо для size і для search) ===== */

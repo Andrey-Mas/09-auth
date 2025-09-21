@@ -1,111 +1,35 @@
 // app/notes/filter/[...slug]/page.tsx
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import type { Tag } from "@/types";
 import NotesClient from "./Notes.client";
-import type { UITag } from "@/types/note";
 
 type Params = { slug?: string[] };
-type Search = {
-  [key: string]: string | string[] | undefined;
-  page?: string;
-  query?: string;
-};
 
-const VALID_TAGS: ReadonlyArray<UITag> = [
-  "All",
-  "Todo",
-  "Work",
-  "Personal",
-  "Meeting",
-  "Shopping",
-];
-
-// --- SEO (динамічно за фільтром) ---
-// У твоїй версії Next тут params треба чекати
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<Params>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const parts = Array.isArray(slug) ? slug : [];
-
-  if (parts.length > 1) {
-    return {
-      title: "Notes — Not found | NoteHub",
-      description: "This page does not exist.",
-      openGraph: {
-        title: "Notes — Not found | NoteHub",
-        description: "This page does not exist.",
-        url: `/notes/filter/${parts.map(encodeURIComponent).join("/")}`,
-        images: ["https://ac.goit.global/fullstack/react/notehub-og-meta.jpg"],
-      },
-    };
-  }
-
-  const rawTag = parts[0] || "All";
-
-  if (!(VALID_TAGS as readonly string[]).includes(rawTag)) {
-    return {
-      title: "Notes — Invalid tag | NoteHub",
-      description: "This tag does not exist in NoteHub.",
-      openGraph: {
-        title: "Notes — Invalid tag | NoteHub",
-        description: "This tag does not exist in NoteHub.",
-        url: `/notes/filter/${encodeURIComponent(rawTag)}`,
-        images: ["https://ac.goit.global/fullstack/react/notehub-og-meta.jpg"],
-      },
-    };
-  }
-
-  const title = `Notes — ${rawTag} | NoteHub`;
-  const description = `Browse notes filtered by tag: ${rawTag}.`;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `/notes/filter/${encodeURIComponent(rawTag)}`,
-      images: ["https://ac.goit.global/fullstack/react/notehub-og-meta.jpg"],
-    },
-  };
-}
-
-// --- Сторінка ---
-// Тут теж: params/searchParams приходять як Promise у твоїй збірці
 export default async function NotesPage({
   params,
   searchParams,
 }: {
   params: Promise<Params>;
-  searchParams?: Promise<Search>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { slug } = await params;
-  const sp = (await searchParams) ?? {};
+  const { slug = [] } = await params;
+  const sp = await searchParams;
 
-  const parts = Array.isArray(slug) ? slug : [];
+  // перший сегмент у catch-all трактуємо як тег
+  const rawTag = slug[0];
+  const tag = (rawTag ? decodeURIComponent(rawTag) : "All") as Tag | "All";
 
-  // 404 якщо зайвих сегментів більше одного
-  if (parts.length > 1) {
-    notFound();
-  }
+  // page з query (?page=)
+  const rawPage = Array.isArray(sp.page) ? sp.page[0] : sp.page;
+  const pageNum = Number(rawPage ?? 1);
+  const page = Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1;
 
-  const rawTag = parts[0] || "All";
+  // search з query (?search=)
+  const query =
+    typeof sp.search === "string"
+      ? sp.search
+      : Array.isArray(sp.search)
+        ? (sp.search[0] ?? "")
+        : "";
 
-  // 404 якщо тег невалідний
-  if (!(VALID_TAGS as readonly string[]).includes(rawTag)) {
-    notFound();
-  }
-
-  const tag = rawTag as UITag;
-
-  const page =
-    typeof sp.page === "string" ? Math.max(1, parseInt(sp.page, 10) || 1) : 1;
-  const query = typeof sp.query === "string" ? sp.query : "";
-
-  return (
-    <NotesClient initialPage={page} initialQuery={query} initialTag={tag} />
-  );
+  return <NotesClient tag={tag} page={page} query={query} />;
 }

@@ -13,6 +13,9 @@ export type Tag =
   | "Important"
   | "Todo";
 
+/** Сумісність зі старою назвою типу, який ти імпортуєш у lib/api.ts */
+export type BackendTag = Tag;
+
 /** Модель нотатки */
 export interface Note {
   id: string;
@@ -28,7 +31,7 @@ export interface NotesQuery {
   search?: string;
   tag?: Tag;
   page?: number;
-  perPage?: number; // ← ВАЖЛИВО: є perPage
+  perPage?: number; // бек за ТЗ використовує 12, але лишаємо в типі
 }
 
 /** Нормалізована відповідь зі списком (для пагінації) */
@@ -39,16 +42,14 @@ export interface PaginatedNotes {
   totalItems: number;
   totalPages: number;
 }
-
-/** Сумісність зі старою назвою */
-export type FetchNotesResponse = PaginatedNotes;
-
-/** DTO для оновлення нотатки */
 export interface UpdateNoteDto {
   title?: string;
   content?: string;
   tag?: Tag;
 }
+
+/** Сумісність зі старою назвою типу відповіді */
+export type FetchNotesResponse = PaginatedNotes;
 
 /** UI-набір тегів (для меню/сайдбару) */
 export const TAGS_UI = [
@@ -67,7 +68,5 @@ export const TAGS_UI = [
 
 /** Тип одного елемента TAGS_UI */
 export type UITagOption = (typeof TAGS_UI)[number];
-
 /** Значення тега для UI (рядок) */
 export type UITag = UITagOption["value"];
-// types/note.ts
