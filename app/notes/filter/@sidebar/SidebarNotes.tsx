@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import css from "./SidebarNotes.module.css";
-// якщо у тебе інший шлях до TAGS_UI, поміняй на свій (наприклад "@/types/note")
+// 👇 ПРИ ПОТРЕБІ зміни шлях: на "@/types/note" або там, де ти експортуєш TAGS_UI
 import { TAGS_UI } from "@/types";
 
+// Тип елемента з масиву TAGS_UI (підтримує як рядки, так і { value, label })
 type UITag = (typeof TAGS_UI)[number];
 
 const getValue = (t: UITag) => (typeof t === "string" ? t : t.value);
@@ -17,9 +18,10 @@ export default function SidebarNotes() {
         {TAGS_UI.map((t) => {
           const value = getValue(t);
           const label = getLabel(t);
+
           const href =
             value === "All"
-              ? "/notes/filter/All"
+              ? "/notes/filter/All" // якщо у тебе All = /notes, можна змінити тут на "/notes"
               : `/notes/filter/${encodeURIComponent(value)}`;
 
           return (
