@@ -1,12 +1,5 @@
-import type { Metadata } from "next";
-// якщо використовуєш список нотаток:
 import NoteList from "@/components/NoteList/NoteList";
-// якщо потрібні типи тегів:
 import type { Tag } from "@/types";
-
-export const metadata: Metadata = {
-  title: "Notes — Filter",
-};
 
 type Params = { tag: string };
 
@@ -18,11 +11,11 @@ export default async function NotesByTagPage({
   const { tag } = await params;
   const decoded = decodeURIComponent(tag) as Tag | "All";
 
+  // Якщо NoteList сам читає тег зі стейту/URL — можна не передавати проп
   return (
-    <main className="container">
+    <main style={{ padding: 24 }}>
       <h1>Notes</h1>
-      {/* якщо NoteList сам читає тег із URL — просто рендеримо його */}
-      <NoteList /* defaultTag={decoded === "All" ? undefined : decoded} */ />
+      <NoteList tag={decoded === "All" ? undefined : (decoded as Tag)} />
     </main>
   );
 }
