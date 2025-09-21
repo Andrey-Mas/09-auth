@@ -2,7 +2,11 @@
 import css from "./EditProfilePage.module.css";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { getMe, updateMe } from "@/lib/api/clientApi";
+import {
+  getMeClient as getMe,
+  updateMeClient as updateMe,
+} from "@/lib/api/clientApi";
+
 import { useRouter } from "next/navigation";
 
 export default function EditProfilePage() {
