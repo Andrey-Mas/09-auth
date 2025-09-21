@@ -1,43 +1,63 @@
+// components/NoteForm/NoteForm.tsx
 "use client";
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createNote } from "@/lib/api/clientApi";
-import { TAGS_UI, type Tag } from "@/types";
+import type { Tag } from "@/types";
 import { useRouter } from "next/navigation";
 
-export default function NoteForm() {
+type Props = {
+  backTo?: string; // ← тепер проп опціональний
+};
+
+const TAGS: Tag[] = [
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+  "Ideas",
+  "Travel",
+  "Finance",
+  "Health",
+  "Important",
+  "Todo",
+];
+
+export default function NoteForm({ backTo }: Props) {
+  const router = useRouter();
+  const qc = useQueryClient();
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tag, setTag] = useState<Tag>("Work");
-
-  const router = useRouter();
-  const qc = useQueryClient();
 
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: () => createNote({ title, content, tag }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["notes"] });
-      // якщо відкрито як модалка (є історія з /notes) — просто закриваємо
-      if (typeof window !== "undefined" && window.history.length > 1) {
-        router.back();
-        // запасний варіант на випадок прямого входу
-        setTimeout(() => router.replace("/notes"), 0);
+      // якщо є сторінка, куди треба повертатись, використовуємо її
+      if (backTo) {
+        router.replace(backTo, { scroll: false });
       } else {
-        router.replace("/notes");
+        // інакше: якщо відкрито як модалка — закриваємо, якщо ні — на /notes
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+          setTimeout(() => router.replace("/notes", { scroll: false }), 0);
+        } else {
+          router.replace("/notes", { scroll: false });
+        }
       }
     },
   });
 
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        mutateAsync();
-      }}
-      style={{ display: "grid", gap: 12, maxWidth: 560, margin: "24px auto" }}
-    >
-      <h1>Create note</h1>
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await mutateAsync();
+  }
 
+  return (
+    <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
       <label>
         <div>Title</div>
         <input
@@ -66,9 +86,9 @@ export default function NoteForm() {
           onChange={(e) => setTag(e.target.value as Tag)}
           style={{ width: "100%", padding: 8 }}
         >
-          {TAGS_UI.filter((t) => t.value !== "All").map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
+          {TAGS.map((t) => (
+            <option key={t} value={t}>
+              {t}
             </option>
           ))}
         </select>
@@ -76,15 +96,21 @@ export default function NoteForm() {
 
       {error && (
         <p style={{ color: "crimson" }}>
-          {(error as any)?.message ?? "Failed to create"}
+          {(error as any)?.response?.data?.message || "Failed to create"}
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         <button type="submit" disabled={isPending}>
-          {isPending ? "Saving..." : "Save"}
+          {isPending ? "Creating…" : "Create"}
         </button>
-        <button type="button" onClick={() => router.back()}>
+        <button
+          type="button"
+          onClick={() => {
+            if (backTo) router.replace(backTo, { scroll: false });
+            else router.back();
+          }}
+        >
           Cancel
         </button>
       </div>
