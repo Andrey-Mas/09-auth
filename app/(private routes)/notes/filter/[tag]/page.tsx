@@ -10,12 +10,5 @@ export default async function NotesByTagPage({
 }) {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag) as Tag | "All";
-
-  // Якщо NoteList сам читає тег зі стейту/URL — можна не передавати проп
-  return (
-    <main style={{ padding: 24 }}>
-      <h1>Notes</h1>
-      <NoteList tag={decoded === "All" ? undefined : (decoded as Tag)} />
-    </main>
-  );
+  return <NoteList tag={decoded === "All" ? undefined : (decoded as Tag)} />;
 }
