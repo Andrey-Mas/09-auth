@@ -1,42 +1,40 @@
 .header {
+  background: #2f3336; /* темний бар */
+}
+
+.nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #333;
-  color: white;
+  justify-content: space-between; /* ← ліве меню зліва, auth-панель справа */
 }
 
-.headerLink {
-  text-decoration: none;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.headerLink:hover {
-  color: #ddd;
-}
-
-.navigation {
-  list-style-type: none;
+/* списки */
+.leftList,
+.rightList {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin: 0;
   padding: 0;
-  display: flex;
-  gap: 1rem;
+  list-style: none;
 }
 
-.navigationItem {
-  display: flex;
-  align-items: center;
-}
-
+/* посилання головного меню */
 .navigationLink {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: #fff;
   text-decoration: none;
-  color: white;
-  font-size: 1rem;
+  line-height: 1;
+  transition: background 0.2s ease;
 }
 
-.navigationLink:hover {
-  color: #ddd;
+/* активна сторінка (білий бейдж) */
+.active {
+  background: #ffffff;
+  color: #212529;
 }

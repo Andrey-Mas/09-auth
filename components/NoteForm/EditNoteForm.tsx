@@ -1,102 +1,138 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getNoteById, updateNote } from "@/lib/api/clientApi";
+import { TAGS_UI, type Tag } from "@/types";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateNote } from "@/lib/api";
-import css from "./NoteForm.module.css";
 
-type BackendTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
-
-export default function EditNoteForm({
-  id,
-  initial,
-  backTo,
-}: {
-  id: string;
-  initial: { title: string; content: string; tag: BackendTag };
-  backTo?: string;
-}) {
+export default function EditNoteForm({ id }: { id: string }) {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const [title, setTitle] = useState(initial.title);
-  const [content, setContent] = useState(initial.content);
-  const [tag, setTag] = useState<BackendTag>(initial.tag);
+  // завантажуємо поточну нотатку
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["note", id],
+    queryFn: () => getNoteById(id),
+  });
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (payload: {
-      title: string;
-      content: string;
-      tag: BackendTag;
-    }) => updateNote(id, payload),
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tag, setTag] = useState<Tag>("Work");
+
+  useEffect(() => {
+    if (data) {
+      setTitle(data.title);
+      setContent(data.content);
+      setTag(data.tag as Tag);
+    }
+  }, [data]);
+
+  const closeToNotes = () => {
+    // якщо відкрито як модалка з /notes — закриваємо назад
+    const fromNotesRef =
+      typeof document !== "undefined" &&
+      document.referrer &&
+      new URL(document.referrer).pathname.startsWith("/notes");
+
+    if (
+      fromNotesRef ||
+      (typeof window !== "undefined" && window.history.length > 1)
+    ) {
+      router.back();
+      // запасний варіант, якщо історії немає або back нічого не зробив
+      setTimeout(() => router.replace("/notes", { scroll: false }), 0);
+    } else {
+      // прямий перехід на /notes/[id]/edit
+      router.replace("/notes", { scroll: false });
+    }
+  };
+
+  const {
+    mutateAsync,
+    isPending,
+    error: saveError,
+  } = useMutation({
+    mutationFn: () => updateNote(id, { title, content, tag }),
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["notes"] });
-      await qc.refetchQueries({ queryKey: ["notes"], type: "active" });
-      router.replace(backTo ?? "/notes/filter/All");
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["notes"] }),
+        qc.invalidateQueries({ queryKey: ["note", id] }),
+      ]);
+      closeToNotes();
     },
   });
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await mutateAsync({ title, content, tag });
-  };
+  if (isLoading) return <main style={{ padding: 24 }}>Loading…</main>;
+  if (isError)
+    return (
+      <main style={{ padding: 24, color: "crimson" }}>
+        {(error as any)?.message ?? "Failed to load"}
+      </main>
+    );
 
   return (
-    <form className={css.form} onSubmit={onSubmit}>
-      <div className={css.formGroup}>
-        <label htmlFor="title">Title</label>
-        <input
-          id="title"
-          className={css.input}
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-      </div>
+    <main style={{ padding: 24, maxWidth: 640, margin: "0 auto" }}>
+      <h1 style={{ marginBottom: 16 }}>Edit note</h1>
 
-      <div className={css.formGroup}>
-        <label htmlFor="content">Content</label>
-        <textarea
-          id="content"
-          className={css.textarea}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={6}
-          required
-        />
-      </div>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void mutateAsync();
+        }}
+        style={{ display: "grid", gap: 12 }}
+      >
+        <label>
+          <div>Title</div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            style={{ width: "100%", padding: 8 }}
+          />
+        </label>
 
-      <div className={css.formGroup}>
-        <label htmlFor="tag">Tag</label>
-        <select
-          id="tag"
-          className={css.select}
-          value={tag}
-          onChange={(e) => setTag(e.target.value as BackendTag)}
-        >
-          <option value="Todo">Todo</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Meeting">Meeting</option>
-          <option value="Shopping">Shopping</option>
-        </select>
-      </div>
+        <label>
+          <div>Content</div>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+            rows={6}
+            style={{ width: "100%", padding: 8 }}
+          />
+        </label>
 
-      {error && <p className={css.error}>{(error as Error).message}</p>}
+        <label>
+          <div>Tag</div>
+          <select
+            value={tag}
+            onChange={(e) => setTag(e.target.value as Tag)}
+            style={{ width: "100%", padding: 8 }}
+          >
+            {TAGS_UI.filter((t) => t.value !== "All").map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div className={css.actions}>
-        {backTo && (
-          <Link href={backTo} scroll={false} className={css.cancelButton}>
-            Cancel
-          </Link>
+        {saveError && (
+          <p style={{ color: "crimson" }}>
+            {(saveError as any)?.response?.data?.message || "Failed to save"}
+          </p>
         )}
-        <button type="submit" disabled={isPending} className={css.submitButton}>
-          {isPending ? "Saving…" : "Save changes"}
-        </button>
-      </div>
-    </form>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="submit" disabled={isPending}>
+            {isPending ? "Saving…" : "Save"}
+          </button>
+          <button type="button" onClick={() => router.back()}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </main>
   );
 }

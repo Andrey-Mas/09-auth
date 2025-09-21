@@ -1,135 +1,91 @@
 "use client";
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNote } from "@/lib/api";
-import css from "./NoteForm.module.css";
-import { useNoteStore } from "@/lib/store/noteStore";
-import type { DraftTag } from "@/lib/store/noteStore";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "@/lib/api/clientApi";
+import { TAGS_UI, type Tag } from "@/types";
+import { useRouter } from "next/navigation";
 
-export default function NoteForm({ backTo }: { backTo?: string }) {
+export default function NoteForm() {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tag, setTag] = useState<Tag>("Work");
+
   const router = useRouter();
   const qc = useQueryClient();
-  const { draft, setDraft, clearDraft } = useNoteStore();
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["notes"] });
+  const { mutateAsync, isPending, error } = useMutation({
+    mutationFn: () => createNote({ title, content, tag }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["notes"] });
+      // якщо відкрито як модалка (є історія з /notes) — просто закриваємо
+      if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+        // запасний варіант на випадок прямого входу
+        setTimeout(() => router.replace("/notes"), 0);
+      } else {
+        router.replace("/notes");
+      }
     },
   });
 
-  async function formAction(formData: FormData) {
-    setErrorMsg(null);
-
-    const title = String(formData.get("title") || "");
-    const content = String(formData.get("content") || "");
-    const tag = String(formData.get("tag") || "Todo") as DraftTag;
-
-    try {
-      await mutateAsync({ title, content, tag });
-      clearDraft(); // очищаємо тільки після успіху
-
-      if (backTo) router.push(backTo);
-      else router.back();
-    } catch (err: any) {
-      // 429, 5xx тощо — показуємо повідомлення, draft НЕ чіпаємо
-      const status = err?.response?.status ?? err?.status;
-      if (status === 429) {
-        setErrorMsg("Server rate limit: too many requests. Please try again.");
-      } else {
-        setErrorMsg(err?.message || "Failed to create note.");
-      }
-    }
-  }
-
   return (
-    <form className={css.form} action={formAction}>
-      <div className={css.field}>
-        <label className={css.label} htmlFor="title">
-          Title
-        </label>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        mutateAsync();
+      }}
+      style={{ display: "grid", gap: 12, maxWidth: 560, margin: "24px auto" }}
+    >
+      <h1>Create note</h1>
+
+      <label>
+        <div>Title</div>
         <input
-          id="title"
-          name="title"
-          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           required
-          value={draft.title}
-          onChange={(e) => setDraft({ title: e.target.value })}
-          className={css.input}
-          placeholder="Enter title…"
+          style={{ width: "100%", padding: 8 }}
         />
-      </div>
+      </label>
 
-      <div className={css.field}>
-        <label className={css.label} htmlFor="content">
-          Content
-        </label>
+      <label>
+        <div>Content</div>
         <textarea
-          id="content"
-          name="content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           required
-          value={draft.content}
-          onChange={(e) => setDraft({ content: e.target.value })}
-          className={css.textarea}
           rows={6}
-          placeholder="Write your note…"
+          style={{ width: "100%", padding: 8 }}
         />
-      </div>
+      </label>
 
-      <div className={css.field}>
-        <label className={css.label} htmlFor="tag">
-          Tag
-        </label>
+      <label>
+        <div>Tag</div>
         <select
-          id="tag"
-          name="tag"
-          value={draft.tag}
-          onChange={(e) => setDraft({ tag: e.target.value as DraftTag })}
-          className={css.select}
+          value={tag}
+          onChange={(e) => setTag(e.target.value as Tag)}
+          style={{ width: "100%", padding: 8 }}
         >
-          <option value="Todo">Todo</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Meeting">Meeting</option>
-          <option value="Shopping">Shopping</option>
+          {TAGS_UI.filter((t) => t.value !== "All").map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
         </select>
-      </div>
+      </label>
 
-      {errorMsg && (
-        <div
-          style={{
-            marginTop: 8,
-            padding: 10,
-            borderRadius: 8,
-            background: "#ffe6e9",
-            color: "#dc3545",
-            fontSize: 14,
-          }}
-        >
-          {errorMsg}
-        </div>
+      {error && (
+        <p style={{ color: "crimson" }}>
+          {(error as any)?.message ?? "Failed to create"}
+        </p>
       )}
 
-      <div className={css.actions}>
-        {backTo ? (
-          <Link href={backTo} scroll={false} className={css.cancelButton}>
-            Cancel
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className={css.cancelButton}
-          >
-            Cancel
-          </button>
-        )}
-        <button type="submit" disabled={isPending} className={css.submitButton}>
-          {isPending ? "Saving…" : "Save"}
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="submit" disabled={isPending}>
+          {isPending ? "Saving..." : "Save"}
+        </button>
+        <button type="button" onClick={() => router.back()}>
+          Cancel
         </button>
       </div>
     </form>

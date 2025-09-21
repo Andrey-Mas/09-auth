@@ -1,24 +1,14 @@
+// app/providers.tsx
 "use client";
 
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-// (опційно) import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import type { ReactNode } from "react";
+import QueryProvider from "@/components/QueryProvider/QueryProvider";
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
-  const [client] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: { retry: 1, refetchOnWindowFocus: false },
-          mutations: { retry: 1 },
-        },
-      }),
-  );
-
+export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={client}>
-      {children}
-      {/* <ReactQueryDevtools initialIsOpen={false} /> */}
-    </QueryClientProvider>
+    <QueryProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </QueryProvider>
   );
 }

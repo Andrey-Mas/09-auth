@@ -3,27 +3,50 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import css from "./TagsMenu.module.css";
-import { TAGS_UI, UITag } from "@/types/note";
+
+const TAGS = [
+  "All",
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+  "Ideas",
+  "Travel",
+  "Finance",
+  "Health",
+  "Important",
+  "Todo",
+] as const;
+type UITag = (typeof TAGS)[number];
 
 export default function TagsMenu() {
   const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
+  // клік поза меню / Esc — закриваємо
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node))
         setOpen(false);
-      }
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onEsc);
+    };
   }, []);
 
   return (
-    <div className={css.menuContainer} ref={menuRef}>
+    <div className={css.container} ref={ref}>
+      {/* Кнопка меню */}
       <button
         type="button"
-        className={css.menuButton}
+        data-tags-trigger
+        className={css.trigger}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -32,18 +55,19 @@ export default function TagsMenu() {
       </button>
 
       {open && (
-        <ul className={css.menuList} role="menu">
-          {TAGS_UI.map((tag: UITag) => {
+        <ul role="menu" className={css.menu}>
+          {TAGS.map((tag: UITag) => {
             const href =
               tag === "All"
-                ? "/notes/filter/All"
+                ? "/notes"
                 : `/notes/filter/${encodeURIComponent(tag)}`;
             return (
-              <li className={css.menuItem} key={tag} role="none">
+              <li key={tag} role="none">
                 <Link
                   href={href}
-                  className={css.menuLink}
                   role="menuitem"
+                  className={css.item}
+                  prefetch={false}
                   onClick={() => setOpen(false)}
                 >
                   {tag}

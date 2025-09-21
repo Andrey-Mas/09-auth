@@ -1,3 +1,48 @@
+/* контейнер сторінки */
+.container {
+  padding: 24px;
+}
+
+/* заголовок + кнопка Create праворуч */
+.title {
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* панель пошуку */
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.searchInput {
+  flex: 1 1 auto;
+  padding: 10px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.searchButton {
+  padding: 10px 14px;
+  border: 1px solid #0d6efd;
+  background: #0d6efd;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.searchButton:hover {
+  background: #0b5ed7;
+}
+
+/* список нотаток (з твого CSS) */
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -10,7 +55,7 @@
 .listItem {
   background-color: #ffffff;
   border: 1px solid #dee2e6;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -19,76 +64,134 @@
   min-height: 180px;
 }
 
-.title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: #212529;
-}
-
 .content {
-  margin: 0;
+  margin: 0 0 12px 0;
   flex-grow: 1;
   font-size: 14px;
   color: #495057;
-  margin-bottom: 12px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.button {
-  align-self: flex-end;
-  padding: 6px 12px;
-  font-size: 14px;
-  color: #fff;
-  background-color: #dc3545;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+/* повідомлення/помилки */
+.info {
+  margin: 8px 0;
+  color: #495057;
+}
+.error {
+  margin: 8px 0;
+  color: #dc3545;
 }
 
-.button:hover {
-  background-color: #bb2d3b;
-}
-
-.footer {
+/* пагінація */
+.pagination {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
+  gap: 8px;
+  margin-top: 16px;
 }
 
+.pageButton {
+  padding: 8px 12px;
+  background: #f1f3f5;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.pageIndicator {
+  padding: 6px 10px;
+  font-weight: 600;
+}
+.footer {
+  /* було: flex ...  → стало: grid */
+  display: grid;
+  grid-template-columns: auto 1fr; /* тег займає стільки, скільки треба; кнопки — весь решту простір */
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px; /* відступ між рядами, якщо кнопки перейдуть на другий ряд */
+  margin-top: auto;
+  min-width: 0;
+}
+
+/* блок кнопок праворуч; дозволяємо перенос по рядках */
+.actions {
+  justify-self: end; /* прилягає праворуч */
+  display: flex;
+  flex-wrap: wrap; /* ← головне: переноситися, а не вилазити */
+  gap: 8px; /* і міжрядковий, і міжколонковий відступ */
+  max-width: 100%; /* не ширше, ніж колонка гріда */
+}
+
+/* однакова висота елементів у футері */
+.link,
+.button,
 .tag {
-  display: inline-block;
-  padding: 4px 8px;
+  height: 36px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* бейдж тега — зліва, не обрізається */
+.tag {
+  padding: 0 12px;
   font-size: 12px;
+  font-weight: 600;
   color: #0d6efd;
   background-color: #e7f1ff;
   border: 1px solid #b6d4fe;
-  border-radius: 12px;
-  max-width: 100px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  border-radius: 9999px;
+  max-width: none;
+  overflow: visible;
 }
 
+/* кнопки */
 .link {
-  align-self: flex-end;
-  padding: 6px 12px;
+  padding: 0 14px;
   font-size: 14px;
   color: #fff;
-  background-color: #0d6efd; /* синій колір */
-  border: none;
-  border-radius: 4px;
+  background-color: #0d6efd;
+  border: 1px solid #0d6efd;
+  border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  transition: background-color 0.2s;
 }
-
 .link:hover {
   background-color: #0b5ed7;
+}
+
+.button {
+  padding: 0 14px;
+  font-size: 14px;
+  color: #fff;
+  background-color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.button:hover {
+  background-color: #bb2d3b;
+}
+@media (max-width: 420px) {
+  .actions {
+    gap: 6px;
+  }
+  .link,
+  .button {
+    padding: 0 12px;
+  }
 }
