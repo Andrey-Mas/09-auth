@@ -3,10 +3,10 @@ import type { Tag } from "@/types";
 
 type Params = { tag: string };
 
-export default async function NotesByTagPage({
+export default async function Page({
   params,
 }: {
-  params: Promise<Params>;
+  params: Promise<{ tag: string }>;
 }) {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag) as Tag | "All";

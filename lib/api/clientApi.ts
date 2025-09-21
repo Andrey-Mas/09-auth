@@ -10,7 +10,6 @@ import type {
 } from "@/types";
 
 /* ========== AUTH ========== */
-
 export async function login(payload: {
   email: string;
   password: string;
@@ -35,10 +34,8 @@ export async function getSessionClient(): Promise<User | null> {
   try {
     const res = await api.get<User | null>("/auth/session");
     const data: any = res.data;
-    if (data && typeof data === "object" && (data.email || data.id)) {
+    if (data && typeof data === "object" && (data.email || data.id))
       return data as User;
-    }
-    // fallback на /users/me, якщо /auth/session вернув 200 без тіла
     try {
       const me = await api.get<User>("/users/me");
       return me.data;
@@ -51,7 +48,6 @@ export async function getSessionClient(): Promise<User | null> {
 }
 
 /* ========== USERS ========== */
-
 export async function getMe(): Promise<User> {
   const res = await api.get<User>("/users/me");
   return res.data;
@@ -63,15 +59,12 @@ export async function updateMe(dto: Partial<User>): Promise<User> {
 }
 
 /* ========== NOTES ========== */
-
 export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
   const res = await api.get<unknown>("/notes", { params });
   const raw: unknown = res.data;
-
   const perPage = params.perPage ?? 12;
   const page = Number(params.page ?? 1);
 
-  // якщо бекенд повертає масив
   if (Array.isArray(raw)) {
     const items = raw as Note[];
     const totalItems = items.length;
@@ -79,14 +72,11 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     return { items, page, perPage, totalItems, totalPages };
   }
 
-  // якщо бекенд повертає об'єкт
   const data = raw as any;
   const items: Note[] =
     data?.items ?? data?.results ?? data?.data ?? data?.notes ?? [];
-
   const totalItems: number =
     typeof data?.totalItems === "number" ? data.totalItems : items.length;
-
   const totalPages: number =
     typeof data?.totalPages === "number"
       ? data.totalPages
@@ -127,5 +117,5 @@ export async function deleteNote(id: string): Promise<void> {
   await api.delete(`/notes/${id}`);
 }
 
-/* --- aliases for backward compatibility (на випадок старих імпортів) --- */
+/* ---- aliases для зворотної сумісності ---- */
 export { getMe as getMeClient, updateMe as updateMeClient };
