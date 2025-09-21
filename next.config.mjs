@@ -2,7 +2,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Вимкнути ESLint-перевірку під час білду (щоб деплой не падав на лінті)
     ignoreDuringBuilds: true,
   },
   images: {

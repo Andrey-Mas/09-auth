@@ -1,4 +1,3 @@
-// components/NoteForm/NoteForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,9 +6,7 @@ import { createNote } from "@/lib/api/clientApi";
 import type { Tag } from "@/types";
 import { useRouter } from "next/navigation";
 
-type Props = {
-  backTo?: string; // ← тепер проп опціональний
-};
+type Props = { backTo?: string };
 
 const TAGS: Tag[] = [
   "Work",
@@ -36,18 +33,8 @@ export default function NoteForm({ backTo }: Props) {
     mutationFn: () => createNote({ title, content, tag }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["notes"] });
-      // якщо є сторінка, куди треба повертатись, використовуємо її
-      if (backTo) {
-        router.replace(backTo, { scroll: false });
-      } else {
-        // інакше: якщо відкрито як модалка — закриваємо, якщо ні — на /notes
-        if (typeof window !== "undefined" && window.history.length > 1) {
-          router.back();
-          setTimeout(() => router.replace("/notes", { scroll: false }), 0);
-        } else {
-          router.replace("/notes", { scroll: false });
-        }
-      }
+      if (backTo) router.replace(backTo, { scroll: false });
+      else router.replace("/notes", { scroll: false });
     },
   });
 
@@ -106,10 +93,9 @@ export default function NoteForm({ backTo }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => {
-            if (backTo) router.replace(backTo, { scroll: false });
-            else router.back();
-          }}
+          onClick={() =>
+            backTo ? router.replace(backTo, { scroll: false }) : router.back()
+          }
         >
           Cancel
         </button>

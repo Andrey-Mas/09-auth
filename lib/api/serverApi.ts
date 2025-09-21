@@ -1,31 +1,77 @@
 // lib/api/serverApi.ts
+import axios, {
+  isAxiosError,
+  type AxiosError,
+  type AxiosInstance,
+} from "axios";
 import { cookies } from "next/headers";
-import { api } from "./api";
-import type { User, UpdateUserDto } from "@/types";
+import type { User } from "@/types";
 
-// створюємо клієнт axios з куками із запиту
-async function withServerCookies() {
-  const cookieStore = await cookies(); // <-- важливо: await
-  const cookieHeader = cookieStore.toString(); // формуємо Cookie header
-  return api.create({
-    headers: { Cookie: cookieHeader },
+/** Абсолютний baseURL до наших app/api-роутів */
+function resolveBaseURL() {
+  const env = process.env.NEXT_PUBLIC_API_URL;
+  if (env) return env.replace(/\/+$/, "") + "/api";
+  if (process.env.VERCEL_URL) {
+    const host = process.env.VERCEL_URL.replace(/\/+$/, "");
+    const url = host.startsWith("http") ? host : `https://${host}`;
+    return `${url}/api`;
+  }
+  return "http://localhost:3000/api";
+}
+
+/** Next 15: cookies() — async */
+async function buildCookieHeader(): Promise<string> {
+  const store = await cookies(); // обов’язково await
+  const list = store.getAll();
+  if (!list.length) return "";
+  return list
+    .map(
+      (c: { name: string; value: string }) =>
+        `${c.name}=${encodeURIComponent(c.value)}`,
+    )
+    .join("; ");
+}
+
+/** Axios-клієнт із куками поточного SSR-запиту */
+export async function withServerCookies(): Promise<AxiosInstance> {
+  const Cookie = await buildCookieHeader();
+  return axios.create({
+    baseURL: resolveBaseURL(), // ← тут реальний вираз
+    withCredentials: true,
+    headers: {
+      ...(Cookie ? { Cookie } : {}),
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   });
 }
 
-export async function getMeServer(): Promise<User> {
+/** Читання профілю: 401 -> null */
+export async function getMeServer(): Promise<User | null> {
   const client = await withServerCookies();
-  const res = await client.get<User>("/users/me");
-  return res.data;
+  try {
+    const res = await client.get<User>("/users/me");
+    return res.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const e = err as AxiosError<any>;
+      if (e.response?.status === 401) return null;
+    }
+    throw err;
+  }
 }
 
-export async function updateMeServer(dto: UpdateUserDto): Promise<User> {
+/** Оновлення профілю: 401 -> null */
+export async function updateMeServer(dto: Partial<User>): Promise<User | null> {
   const client = await withServerCookies();
-  const res = await client.patch<User>("/users/me", dto);
-  return res.data;
-}
-
-export async function getSessionServer(): Promise<User | null> {
-  const client = await withServerCookies();
-  const res = await client.get<User | null>("/auth/session");
-  return (res.data as User) ?? null;
+  try {
+    const res = await client.patch<User>("/users/me", dto);
+    return res.data;
+  } catch (err) {
+    if (isAxiosError(err)) {
+      const e = err as AxiosError<any>;
+      if (e.response?.status === 401) return null;
+    }
+    throw err;
+  }
 }

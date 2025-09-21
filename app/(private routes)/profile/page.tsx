@@ -1,38 +1,38 @@
 // app/(private routes)/profile/page.tsx
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
-import css from "./ProfilePage.module.css";
+import { redirect } from "next/navigation";
 import { getMeServer } from "@/lib/api/serverApi";
+import css from "./ProfilePage.module.css";
 
 export const metadata: Metadata = {
-  title: "Profile",
-  description: "User profile page",
-  openGraph: { title: "Profile", description: "User profile page" },
+  title: "Profile Page — NoteHub",
+  description: "User profile",
 };
 
 export default async function ProfilePage() {
   const user = await getMeServer();
+  if (!user) redirect("/sign-in");
 
-  // надійний фолбек навіть якщо прийде "" або пробіли
   const avatarSrc =
-    typeof user.avatar === "string" && user.avatar.trim().length > 0
-      ? user.avatar
-      : "/default-avatar.png";
+    (typeof (user as any).avatarUrl === "string" &&
+      (user as any).avatarUrl.trim()) ||
+    (typeof (user as any).avatar === "string" && (user as any).avatar.trim()) ||
+    "/default-avatar.png";
 
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
         <div className={css.header}>
           <h1 className={css.formTitle}>Profile Page</h1>
-          <Link href="/profile/edit" className={css.editProfileButton}>
+          <a href="/profile/edit" className={css.editProfileButton}>
             Edit Profile
-          </Link>
+          </a>
         </div>
 
         <div className={css.avatarWrapper}>
           <Image
-            src="/default-avatar.png"
+            src={avatarSrc}
             alt="User Avatar"
             width={120}
             height={120}
@@ -42,7 +42,7 @@ export default async function ProfilePage() {
         </div>
 
         <div className={css.profileInfo}>
-          <p>Username: {user.username ?? "your_username"}</p>
+          <p>Username: {user.username ?? "—"}</p>
           <p>Email: {user.email}</p>
         </div>
       </div>

@@ -9,7 +9,7 @@ import type {
   UpdateNoteDto,
 } from "@/types";
 
-/* ===== AUTH ===== */
+/* ========== AUTH ========== */
 export async function login(payload: {
   email: string;
   password: string;
@@ -44,7 +44,7 @@ export async function getSessionClient(): Promise<User | null> {
   }
 }
 
-/* ===== USERS ===== */
+/* ========== USERS ========== */
 export async function getMe(): Promise<User> {
   const res = await api.get<User>("/users/me");
   return res.data;
@@ -54,10 +54,11 @@ export async function updateMe(dto: Partial<User>): Promise<User> {
   return res.data;
 }
 
-/* ===== NOTES ===== */
+/* ========== NOTES ========== */
 export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
   const res = await api.get<unknown>("/notes", { params });
   const raw: unknown = res.data;
+
   const perPage = params.perPage ?? 12;
   const page = Number(params.page ?? 1);
 
@@ -67,15 +68,19 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
     return { items, page, perPage, totalItems, totalPages };
   }
+
   const data = raw as any;
   const items: Note[] =
     data?.items ?? data?.results ?? data?.data ?? data?.notes ?? [];
+
   const totalItems: number =
     typeof data?.totalItems === "number" ? data.totalItems : items.length;
+
   const totalPages: number =
     typeof data?.totalPages === "number"
       ? data.totalPages
       : Math.max(1, Math.ceil(totalItems / (data?.perPage ?? perPage)));
+
   return {
     items,
     page: data?.page ?? page,
@@ -84,10 +89,12 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     totalPages,
   };
 }
+
 export async function getNoteById(id: string): Promise<Note> {
   const res = await api.get<Note>(`/notes/${id}`);
   return res.data;
 }
+
 export async function createNote(payload: {
   title: string;
   content: string;
@@ -96,6 +103,7 @@ export async function createNote(payload: {
   const res = await api.post<Note>("/notes", payload);
   return res.data;
 }
+
 export async function updateNote(
   id: string,
   dto: UpdateNoteDto,
@@ -103,10 +111,25 @@ export async function updateNote(
   const res = await api.patch<Note>(`/notes/${id}`, dto);
   return res.data;
 }
+
 export async function deleteNote(id: string): Promise<void> {
   await api.delete(`/notes/${id}`);
 }
 
-/* aliases на випадок старих імпортів */
+/* ===== fetchNotes: ЯВНО визначаємо тип параметрів тут, щоб у ньому були search/tag/page/perPage ===== */
+export interface FetchNotesParams {
+  search?: string;
+  tag?: Tag;
+  page?: number;
+  perPage?: number;
+}
+
+export async function fetchNotes(
+  params: FetchNotesParams,
+): Promise<PaginatedNotes> {
+  // Всі запити йдуть у /api (app router proxy), бек бере перPage=12 за замовчуванням
+  return getNotes(params);
+}
+
+/* ---- aliases для зворотної сумісності ---- */
 export { getMe as getMeClient, updateMe as updateMeClient };
-export { getNotes as fetchNotes };

@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import css from "./SidebarNotes.module.css";
-// Зміни шлях імпорту на свій, якщо TAGS_UI експортується з іншого файлу
-import { TAGS_UI } from "@/types/note";
+import { TAGS_UI } from "@/types";
 
-type UITag = { readonly value: string; readonly label: string };
+type UITag = (typeof TAGS_UI)[number];
 
 export default function SidebarNotes() {
   return (
     <aside className={css.sidebar}>
       <ul className={css.list}>
         {TAGS_UI.map((t: UITag) => {
-          const value = t.value;
+          const value = typeof t === "string" ? t : t.value;
+          const label = typeof t === "string" ? t : t.label;
           const href =
             value === "All"
               ? "/notes/filter/All"
@@ -21,7 +21,7 @@ export default function SidebarNotes() {
           return (
             <li key={value} className={css.item}>
               <Link href={href} prefetch={false} className={css.link}>
-                {t.label}
+                {label}
               </Link>
             </li>
           );

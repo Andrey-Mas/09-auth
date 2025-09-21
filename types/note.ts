@@ -1,6 +1,6 @@
 // types/note.ts
 
-/** Бекенд теги */
+/** Доступні теги з бекенда */
 export type Tag =
   | "Work"
   | "Personal"
@@ -13,7 +13,7 @@ export type Tag =
   | "Important"
   | "Todo";
 
-/** Нотатка */
+/** Модель нотатки */
 export interface Note {
   id: string;
   title: string;
@@ -28,10 +28,10 @@ export interface NotesQuery {
   search?: string;
   tag?: Tag;
   page?: number;
-  perPage?: number; // завжди 12 за ТЗ, але лишаємо як опцію
+  perPage?: number; // ← ВАЖЛИВО: є perPage
 }
 
-/** Нормалізована відповідь пагінації */
+/** Нормалізована відповідь зі списком (для пагінації) */
 export interface PaginatedNotes {
   items: Note[];
   page: number;
@@ -40,10 +40,17 @@ export interface PaginatedNotes {
   totalPages: number;
 }
 
-/** Сумісність зі старим ім'ям типу */
+/** Сумісність зі старою назвою */
 export type FetchNotesResponse = PaginatedNotes;
 
-/** UI-список тегів для меню/сайдбару */
+/** DTO для оновлення нотатки */
+export interface UpdateNoteDto {
+  title?: string;
+  content?: string;
+  tag?: Tag;
+}
+
+/** UI-набір тегів (для меню/сайдбару) */
 export const TAGS_UI = [
   { value: "All", label: "All" },
   { value: "Work", label: "Work" },
@@ -58,8 +65,8 @@ export const TAGS_UI = [
   { value: "Todo", label: "Todo" },
 ] as const;
 
-/** Елемент масиву TAGS_UI як об'єкт */
+/** Тип одного елемента TAGS_UI */
 export type UITagOption = (typeof TAGS_UI)[number];
 
-/** Значення тега для UI (рядок "All" або будь-який Tag) */
+/** Значення тега для UI (рядок) */
 export type UITag = UITagOption["value"];

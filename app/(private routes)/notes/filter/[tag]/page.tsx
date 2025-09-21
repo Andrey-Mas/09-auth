@@ -1,14 +1,16 @@
-import NoteList from "@/components/NoteList/NoteList";
+// app/(private routes)/notes/filter/[tag]/page.tsx
 import type { Tag } from "@/types";
+import NotesClient from "@/app/notes/filter/[...slug]/Notes.client"; // ← імпортуємо саме клієнтський компонент
 
 type Params = { tag: string };
 
-export default async function Page({
+export default async function NotesByTagPage({
   params,
 }: {
-  params: Promise<{ tag: string }>;
+  params: Promise<Params>;
 }) {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag) as Tag | "All";
-  return <NoteList tag={decoded === "All" ? undefined : (decoded as Tag)} />;
+
+  return <NotesClient tag={decoded} />;
 }
