@@ -9,7 +9,7 @@ import type {
   UpdateNoteDto,
 } from "@/types";
 
-/* ========== AUTH ========== */
+/* ===== AUTH ===== */
 export async function login(payload: {
   email: string;
   password: string;
@@ -44,7 +44,7 @@ export async function getSessionClient(): Promise<User | null> {
   }
 }
 
-/* ========== USERS ========== */
+/* ===== USERS ===== */
 export async function getMe(): Promise<User> {
   const res = await api.get<User>("/users/me");
   return res.data;
@@ -54,7 +54,7 @@ export async function updateMe(dto: Partial<User>): Promise<User> {
   return res.data;
 }
 
-/* ========== NOTES ========== */
+/* ===== NOTES ===== */
 export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
   const res = await api.get<unknown>("/notes", { params });
   const raw: unknown = res.data;
@@ -76,7 +76,6 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     typeof data?.totalPages === "number"
       ? data.totalPages
       : Math.max(1, Math.ceil(totalItems / (data?.perPage ?? perPage)));
-
   return {
     items,
     page: data?.page ?? page,
@@ -108,5 +107,5 @@ export async function deleteNote(id: string): Promise<void> {
   await api.delete(`/notes/${id}`);
 }
 
-/* ---- aliases для зворотної сумісності ---- */
+/* aliases на випадок старих імпортів */
 export { getMe as getMeClient, updateMe as updateMeClient };
