@@ -17,7 +17,6 @@ export async function login(payload: {
   const res = await api.post<User>("/auth/login", payload);
   return res.data;
 }
-
 export async function register(payload: {
   email: string;
   password: string;
@@ -25,11 +24,9 @@ export async function register(payload: {
   const res = await api.post<User>("/auth/register", payload);
   return res.data;
 }
-
 export async function logout(): Promise<void> {
   await api.post("/auth/logout");
 }
-
 export async function getSessionClient(): Promise<User | null> {
   try {
     const res = await api.get<User | null>("/auth/session");
@@ -52,7 +49,6 @@ export async function getMe(): Promise<User> {
   const res = await api.get<User>("/users/me");
   return res.data;
 }
-
 export async function updateMe(dto: Partial<User>): Promise<User> {
   const res = await api.patch<User>("/users/me", dto);
   return res.data;
@@ -71,7 +67,6 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
     return { items, page, perPage, totalItems, totalPages };
   }
-
   const data = raw as any;
   const items: Note[] =
     data?.items ?? data?.results ?? data?.data ?? data?.notes ?? [];
@@ -90,12 +85,10 @@ export async function getNotes(params: NotesQuery): Promise<PaginatedNotes> {
     totalPages,
   };
 }
-
 export async function getNoteById(id: string): Promise<Note> {
   const res = await api.get<Note>(`/notes/${id}`);
   return res.data;
 }
-
 export async function createNote(payload: {
   title: string;
   content: string;
@@ -104,7 +97,6 @@ export async function createNote(payload: {
   const res = await api.post<Note>("/notes", payload);
   return res.data;
 }
-
 export async function updateNote(
   id: string,
   dto: UpdateNoteDto,
@@ -112,7 +104,6 @@ export async function updateNote(
   const res = await api.patch<Note>(`/notes/${id}`, dto);
   return res.data;
 }
-
 export async function deleteNote(id: string): Promise<void> {
   await api.delete(`/notes/${id}`);
 }
