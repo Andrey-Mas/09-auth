@@ -1,4 +1,4 @@
-import NoteDetails from "@/app/@modal/(.)notes/[id]/NoteDetails.client";
+import NoteDetails from "./NoteDetails.client";
 
 export default async function NotePage({
   params,
