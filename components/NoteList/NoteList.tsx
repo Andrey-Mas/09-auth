@@ -1,3 +1,4 @@
+// components/NoteList/NoteList.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -6,48 +7,63 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { getNotes } from "@/lib/api/clientApi";
-import { useAuthStore } from "@/lib/store/authStore";
 import type { PaginatedNotes, Tag } from "@/types";
+
+import SearchBox from "@/components/SearchBox/SearchBox";
+import Pagination from "@/components/Pagination/Pagination";
 
 import css from "./NoteList.module.css";
 
 const PER_PAGE = 12;
 
-export default function NoteList({ tag }: { tag?: Tag }) {
-  const router = useRouter();
+export default function NoteList() {
+  const [search, setSearch] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
 
-  const [search, setSearch] = useState<string>(
-    searchParams.get("search") ?? "",
-  );
-  const page = Number(searchParams.get("page") ?? "1");
+  const page = useMemo(() => {
+    const p = Number(searchParams.get("page") || "1");
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  }, [searchParams]);
 
-  const queryKey = useMemo(
-    () => ["notes", { page, perPage: PER_PAGE, search, tag }] as const,
-    [page, search, tag],
-  );
+  const tag = useMemo(() => {
+    const raw = searchParams.get("tag") ?? "All";
+    const allowed: ReadonlyArray<Tag | "All"> = [
+      "All",
+      "Work",
+      "Personal",
+      "Meeting",
+      "Shopping",
+      "Ideas",
+      "Travel",
+      "Finance",
+      "Health",
+      "Important",
+      "Todo",
+    ];
+    return (allowed as readonly (Tag | "All")[]).includes(raw as any)
+      ? (raw as Tag | "All")
+      : "All";
+  }, [searchParams]);
 
-  const { data, isLoading, isError, error } = useQuery<PaginatedNotes, Error>({
-    queryKey,
+  const { data, isLoading, isError, error } = useQuery<PaginatedNotes>({
+    queryKey: ["notes", { page, tag, search }],
     queryFn: () =>
       getNotes({
         page,
         perPage: PER_PAGE,
-        search: search.trim() || undefined,
-        tag,
+        tag: tag === "All" ? undefined : (tag as Tag),
+        search: search || undefined,
       }),
     placeholderData: keepPreviousData,
-    enabled: isAuthenticated, // не фетчимо без сесії
-    retry: false,
   });
 
   const setParam = (name: string, value?: string) => {
     const sp = new URLSearchParams(searchParams.toString());
-    if (value && value.length > 0) sp.set(name, value);
+    if (value) sp.set(name, value);
     else sp.delete(name);
-    if (name === "search") sp.delete("page"); // повертаємо на першу сторінку при новому пошуку
+    if (name === "search") sp.delete("page"); // при новому пошуку — на першу сторінку
     router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
   };
 
@@ -60,7 +76,7 @@ export default function NoteList({ tag }: { tag?: Tag }) {
   return (
     <main className={css.container}>
       <h1
-        className={css.title}
+        className={css.pageTitle}
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -68,42 +84,46 @@ export default function NoteList({ tag }: { tag?: Tag }) {
         }}
       >
         <span>Notes</span>
-        <Link href="/notes/new" prefetch={false} className={css.link}>
+
+        {/* ✅ модалка створення з паралельним слотом @modal */}
+        <Link
+          href="/notes/action/create"
+          prefetch={false}
+          scroll={false}
+          className={css.link}
+        >
           Create note +
         </Link>
       </h1>
 
-      {/* Пошук */}
+      {/* пошук */}
       <form
         className={css.controls}
         onSubmit={(e) => {
           e.preventDefault();
-          setParam("search", search);
+          setParam("search", search || undefined);
         }}
       >
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by title or content…"
-          className={css.searchInput}
-        />
+        <SearchBox value={search} onChange={setSearch} />
         <button type="submit" className={css.searchButton}>
           Search
         </button>
       </form>
 
-      {/* Стан */}
+      {/* стан */}
       {isLoading && <p className={css.info}>Loading…</p>}
       {isError && (
-        <p className={css.error}>{error?.message || "Failed to load notes"}</p>
+        <p className={css.error}>
+          {(error as any)?.message || "Failed to load notes"}
+        </p>
       )}
 
-      {/* Список */}
+      {/* список */}
       {!!data?.items.length && (
         <ul className={css.list}>
           {data.items.map((n) => (
             <li key={n.id} className={css.listItem}>
-              <h3 className={css.title}>{n.title}</h3>
+              <h3 className={css.noteTitle}>{n.title}</h3>
 
               <p className={css.content}>
                 {n.content.length > 140
@@ -150,27 +170,13 @@ export default function NoteList({ tag }: { tag?: Tag }) {
         <p className={css.info}>No notes found.</p>
       )}
 
-      {/* Пагінація */}
+      {/* пагінація */}
       {data && data.totalPages > 1 && (
-        <div className={css.pagination}>
-          <button
-            disabled={page <= 1}
-            onClick={() => goToPage(page - 1)}
-            className={css.pageButton}
-          >
-            ← Prev
-          </button>
-          <span className={css.pageIndicator}>
-            {page} / {data.totalPages}
-          </span>
-          <button
-            disabled={page >= data.totalPages}
-            onClick={() => goToPage(page + 1)}
-            className={css.pageButton}
-          >
-            Next →
-          </button>
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={data.totalPages}
+          onPageChange={goToPage}
+        />
       )}
     </main>
   );

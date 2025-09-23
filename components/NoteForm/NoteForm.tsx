@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNote } from "@/lib/api/clientApi";
-import type { Tag } from "@/types";
-import { useRouter } from "next/navigation";
+import { createNote } from "@/lib/api/clientApi"; // підлаштуй імпорт якщо інший
+import css from "./NoteForm.module.css";
 
-type Props = { backTo?: string };
-
-const TAGS: Tag[] = [
+const TAGS = [
   "Work",
   "Personal",
   "Meeting",
@@ -19,59 +16,81 @@ const TAGS: Tag[] = [
   "Health",
   "Important",
   "Todo",
-];
+] as const;
 
-export default function NoteForm({ backTo }: Props) {
-  const router = useRouter();
+type Props = {
+  initial?: { title?: string; content?: string; tag?: (typeof TAGS)[number] };
+  submitLabel?: string;
+  onSuccess?: (note: any) => void;
+};
+
+export default function NoteForm({
+  initial,
+  submitLabel = "Save",
+  onSuccess,
+}: Props) {
+  const [title, setTitle] = React.useState(initial?.title ?? "");
+  const [content, setContent] = React.useState(initial?.content ?? "");
+  const [tag, setTag] = React.useState<(typeof TAGS)[number]>(
+    initial?.tag ?? "Work",
+  );
   const qc = useQueryClient();
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tag, setTag] = useState<Tag>("Work");
-
   const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: () => createNote({ title, content, tag }),
-    onSuccess: async () => {
+    mutationFn: async () => {
+      const payload = { title, content, tag };
+      const note = await createNote(payload);
+      return note;
+    },
+    onSuccess: async (note) => {
       await qc.invalidateQueries({ queryKey: ["notes"] });
-      if (backTo) router.replace(backTo, { scroll: false });
-      else router.replace("/notes", { scroll: false });
+      onSuccess?.(note);
     },
   });
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await mutateAsync();
-  }
+  };
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-      <label>
-        <div>Title</div>
+    <form className={css.form} onSubmit={onSubmit}>
+      <div className={css.field}>
+        <label htmlFor="title" className={css.label}>
+          Title
+        </label>
         <input
+          id="title"
+          required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          required
-          style={{ width: "100%", padding: 8 }}
+          className={css.input}
         />
-      </label>
+      </div>
 
-      <label>
-        <div>Content</div>
+      <div className={css.field}>
+        <label htmlFor="content" className={css.label}>
+          Content
+        </label>
         <textarea
+          id="content"
+          required
+          rows={5}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          required
-          rows={6}
-          style={{ width: "100%", padding: 8 }}
+          className={css.textarea}
         />
-      </label>
+      </div>
 
-      <label>
-        <div>Tag</div>
+      <div className={css.field}>
+        <label htmlFor="tag" className={css.label}>
+          Tag
+        </label>
         <select
+          id="tag"
           value={tag}
-          onChange={(e) => setTag(e.target.value as Tag)}
-          style={{ width: "100%", padding: 8 }}
+          onChange={(e) => setTag(e.target.value as (typeof TAGS)[number])}
+          className={css.select}
         >
           {TAGS.map((t) => (
             <option key={t} value={t}>
@@ -79,25 +98,18 @@ export default function NoteForm({ backTo }: Props) {
             </option>
           ))}
         </select>
-      </label>
+      </div>
 
       {error && (
-        <p style={{ color: "crimson" }}>
-          {(error as any)?.response?.data?.message || "Failed to create"}
+        <p className={css.error}>
+          {/* @ts-expect-error any */}
+          {error?.response?.data?.message || "Failed to save"}
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button type="submit" disabled={isPending}>
-          {isPending ? "Creating…" : "Create"}
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            backTo ? router.replace(backTo, { scroll: false }) : router.back()
-          }
-        >
-          Cancel
+      <div className={css.actions}>
+        <button type="submit" disabled={isPending} className={css.primaryBtn}>
+          {isPending ? "Saving…" : submitLabel}
         </button>
       </div>
     </form>

@@ -10,15 +10,11 @@ export default async function NotesFilterPage({
   searchParams,
 }: {
   params: Promise<Params>;
-  searchParams: Promise<Search> | Search;
+  searchParams?: Promise<Search>;
 }) {
   const { slug = [] } = await params;
-  const sp: Search =
-    typeof (searchParams as any)?.then === "function"
-      ? await (searchParams as Promise<Search>)
-      : (searchParams as Search);
+  const sp: Search = (await searchParams) ?? {};
 
-  const rawTag = decodeURIComponent(slug[0] ?? "All");
   const allowed = [
     "All",
     "Work",
@@ -33,6 +29,7 @@ export default async function NotesFilterPage({
     "Todo",
   ] as const;
 
+  const rawTag = decodeURIComponent(slug[0] ?? "All");
   const tag = (allowed as readonly (Tag | "All")[]).includes(rawTag as any)
     ? (rawTag as Tag | "All")
     : ("All" as const);

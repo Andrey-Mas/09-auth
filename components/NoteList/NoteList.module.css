@@ -4,7 +4,7 @@
 }
 
 /* заголовок + кнопка Create праворуч */
-.title {
+.pageTitle {
   margin: 0 0 16px 0;
   font-size: 24px;
   font-weight: 700;
@@ -21,171 +21,147 @@
 }
 
 .searchInput {
-  flex: 1 1 auto;
-  padding: 10px 12px;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
   border: 1px solid #dee2e6;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
+  border-radius: 6px;
 }
 
 .searchButton {
-  padding: 10px 14px;
-  border: 1px solid #0d6efd;
+  height: 36px;
+  padding: 0 14px;
   background: #0d6efd;
+  border: 1px solid #0d6efd;
+  border-radius: 6px;
   color: #fff;
-  border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-}
-.searchButton:hover {
-  background: #0b5ed7;
 }
 
-/* список нотаток (з твого CSS) */
+/* список карток */
 .list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
-  padding: 0;
-  margin: 0;
-  list-style: none;
 }
 
 .listItem {
-  background-color: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 180px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .content {
-  margin: 0 0 12px 0;
-  flex-grow: 1;
-  font-size: 14px;
-  color: #495057;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: #4b5563;
+  margin: 6px 0 0 0;
 }
 
-/* повідомлення/помилки */
-.info {
-  margin: 8px 0;
-  color: #495057;
-}
-.error {
-  margin: 8px 0;
-  color: #dc3545;
+/* тег + кнопки */
+.footer {
+  /* було: flex ... → стало: grid, щоб не ламалося на вузьких екранах */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px;
+  margin-top: auto;
+  min-width: 0;
 }
 
-/* пагінація */
-.pagination {
+.tag {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3b82f6;
+  white-space: nowrap;
+}
+
+.actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* заголовок нотатки в картці */
+.noteTitle {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* максимум 2 рядки */
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* кнопки/лінки */
+.link,
+.button {
+  display: inline-flex;
+  height: 36px;
   align-items: center;
   gap: 8px;
-  margin-top: 16px;
+  padding: 0 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 1px solid transparent;
 }
 
-.pageButton {
-  padding: 8px 12px;
-  background: #f1f3f5;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  cursor: pointer;
+.link {
+  color: #0d6efd;
+  background: #eef2ff;
+  border-color: #cfe2ff;
 }
-.pageButton:disabled {
-  opacity: 0.5;
-  cursor: default;
+
+.button {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+  transition: background-color 0.2s;
+}
+.button:hover {
+  background-color: #bb2d3b;
 }
 
 .pageIndicator {
   padding: 6px 10px;
   font-weight: 600;
 }
-.footer {
-  /* було: flex ...  → стало: grid */
-  display: grid;
-  grid-template-columns: auto 1fr; /* тег займає стільки, скільки треба; кнопки — весь решту простір */
-  align-items: center;
-  column-gap: 12px;
-  row-gap: 8px; /* відступ між рядами, якщо кнопки перейдуть на другий ряд */
-  margin-top: auto;
-  min-width: 0;
-}
 
-/* блок кнопок праворуч; дозволяємо перенос по рядках */
-.actions {
-  justify-self: end; /* прилягає праворуч */
+.pagination {
   display: flex;
-  flex-wrap: wrap; /* ← головне: переноситися, а не вилазити */
-  gap: 8px; /* і міжрядковий, і міжколонковий відступ */
-  max-width: 100%; /* не ширше, ніж колонка гріда */
-}
-
-/* однакова висота елементів у футері */
-.link,
-.button,
-.tag {
-  height: 36px;
-  line-height: 1;
-  display: inline-flex;
   align-items: center;
-  white-space: nowrap;
-  box-sizing: border-box;
+  gap: 12px;
+  margin-top: 16px;
 }
 
-/* бейдж тега — зліва, не обрізається */
-.tag {
+.pageButton {
+  height: 36px;
   padding: 0 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #0d6efd;
-  background-color: #e7f1ff;
-  border: 1px solid #b6d4fe;
-  border-radius: 9999px;
-  max-width: none;
-  overflow: visible;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
+  background: #fff;
+  cursor: pointer;
 }
 
-/* кнопки */
-.link {
-  padding: 0 14px;
-  font-size: 14px;
-  color: #fff;
-  background-color: #0d6efd;
-  border: 1px solid #0d6efd;
-  border-radius: 8px;
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-.link:hover {
-  background-color: #0b5ed7;
+.info {
+  color: #6c757d;
 }
 
-.button {
-  padding: 0 14px;
-  font-size: 14px;
-  color: #fff;
-  background-color: #dc3545;
-  border: 1px solid #dc3545;
-  border-radius: 8px;
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.2s;
+.error {
+  color: #dc3545;
 }
-.button:hover {
-  background-color: #bb2d3b;
-}
+
 @media (max-width: 420px) {
   .actions {
     gap: 6px;

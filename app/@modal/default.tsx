@@ -1,4 +1,5 @@
-// app/@modal/default.tsx
+// app/(private routes)/@modal/default.tsx
 export default function ModalSlot() {
-  return null; // коли нічого не перехоплено — нічого не рендеримо
+  // Коли немає перехопленого маршруту — не рендеримо взагалі нічого.
+  return null;
 }
