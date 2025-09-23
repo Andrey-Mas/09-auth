@@ -1,5 +1,5 @@
 import type { Tag } from "@/types";
-import NotesClient from "@/app/notes/filter/[...slug]/Notes.client";
+import NotesClient from "../[...slug]/Notes.client";
 
 type Params = { tag: string };
 

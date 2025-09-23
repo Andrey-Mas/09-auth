@@ -1,5 +1,5 @@
 // app/(private routes)/notes/filter/[...slug]/page.tsx
-import NotesClient from "@/app/notes/filter/[...slug]/Notes.client";
+import NotesClient from "./Notes.client";
 import type { Tag } from "@/types";
 
 type Params = { slug?: string[] };

@@ -4,10 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-
-// 🔹 Замініть імпорт, якщо у вас інша назва/шлях:
 import { getNoteById } from "@/lib/api/clientApi";
-// або: import { getNoteById } from "@/lib/api";
 
 type Note = {
   id: string;
