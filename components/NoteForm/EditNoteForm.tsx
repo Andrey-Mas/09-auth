@@ -1,100 +1,110 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateNote } from "@/lib/api";
+import { updateNote } from "@/lib/api/clientApi";
+import type { Note, Tag } from "@/types/note";
+import { ALLOWED_TAGS } from "@/types/note";
 import css from "./NoteForm.module.css";
 
-type BackendTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+type Props = {
+  note: Note;
+};
 
-export default function EditNoteForm({
-  id,
-  initial,
-  backTo,
-}: {
-  id: string;
-  initial: { title: string; content: string; tag: BackendTag };
-  backTo?: string;
-}) {
+export default function EditNoteForm({ note }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const [title, setTitle] = useState(initial.title);
-  const [content, setContent] = useState(initial.content);
-  const [tag, setTag] = useState<BackendTag>(initial.tag);
+  const [title, setTitle] = useState(note.title);
+  const [content, setContent] = useState(note.content);
+  const [tag, setTag] = useState<Tag>(note.tag);
+  const [error, setError] = useState("");
 
-  const { mutateAsync, isPending, error } = useMutation({
-    mutationFn: (payload: {
-      title: string;
-      content: string;
-      tag: BackendTag;
-    }) => updateNote(id, payload),
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["notes"] });
-      await qc.refetchQueries({ queryKey: ["notes"], type: "active" });
-      router.replace(backTo ?? "/notes/filter/All");
+  const mutation = useMutation({
+    mutationFn: () =>
+      updateNote(note.id, {
+        title: title.trim(),
+        content: content.trim(),
+        tag,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notes"] });
+      router.push("/notes");
+    },
+    onError: (err: any) => {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update note. Please try again.",
+      );
     },
   });
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    await mutateAsync({ title, content, tag });
+
+    if (!title.trim() || !content.trim()) {
+      setError("All fields are required");
+      return;
+    }
+
+    setError("");
+    mutation.mutate();
+  };
+
+  const handleCancel = () => {
+    router.push("/notes");
   };
 
   return (
-    <form className={css.form} onSubmit={onSubmit}>
-      <div className={css.formGroup}>
-        <label htmlFor="title">Title</label>
+    <form className={css.form} onSubmit={handleSubmit}>
+      <div className={css.row}>
         <input
-          id="title"
           className={css.input}
           type="text"
+          placeholder="Note title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          required
         />
-      </div>
 
-      <div className={css.formGroup}>
-        <label htmlFor="content">Content</label>
-        <textarea
-          id="content"
-          className={css.textarea}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={6}
-          required
-        />
-      </div>
-
-      <div className={css.formGroup}>
-        <label htmlFor="tag">Tag</label>
         <select
-          id="tag"
           className={css.select}
           value={tag}
-          onChange={(e) => setTag(e.target.value as BackendTag)}
+          onChange={(e) => setTag(e.target.value as Tag)}
         >
-          <option value="Todo">Todo</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Meeting">Meeting</option>
-          <option value="Shopping">Shopping</option>
+          {ALLOWED_TAGS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
       </div>
 
-      {error && <p className={css.error}>{(error as Error).message}</p>}
+      <textarea
+        className={css.textarea}
+        placeholder="Note content"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+      />
+
+      {error && <p className={css.error}>{error}</p>}
 
       <div className={css.actions}>
-        {backTo && (
-          <Link href={backTo} scroll={false} className={css.cancelButton}>
-            Cancel
-          </Link>
-        )}
-        <button type="submit" disabled={isPending} className={css.submitButton}>
-          {isPending ? "Saving…" : "Save changes"}
+        <button
+          type="button"
+          className={css.cancelButton}
+          onClick={handleCancel}
+          disabled={mutation.isPending}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className={css.submitButton}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Saving..." : "Save"}
         </button>
       </div>
     </form>

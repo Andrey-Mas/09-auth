@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import css from "./TagsMenu.module.css";
-import { TAGS_UI, UITag } from "@/types/note";
 
-export default function TagsMenu() {
+type Props = {
+  items: string[]; // ["all", ...ALLOWED_TAGS]
+  value: string; // 'all' або один із items
+  onSelect: (v: string) => void;
+  label?: string;
+};
+
+export default function TagsMenu({
+  items,
+  value,
+  onSelect,
+  label = "Notes",
+}: Props) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,29 +38,26 @@ export default function TagsMenu() {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        Notes ▾
+        {label} ▾
       </button>
 
       {open && (
         <ul className={css.menuList} role="menu">
-          {TAGS_UI.map((tag: UITag) => {
-            const href =
-              tag === "All"
-                ? "/notes/filter/All"
-                : `/notes/filter/${encodeURIComponent(tag)}`;
-            return (
-              <li className={css.menuItem} key={tag} role="none">
-                <Link
-                  href={href}
-                  className={css.menuLink}
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                >
-                  {tag}
-                </Link>
-              </li>
-            );
-          })}
+          {items.map((tag) => (
+            <li className={css.menuItem} key={tag} role="none">
+              <button
+                type="button"
+                className={`${css.menuLink} ${value === tag ? css.active : ""}`}
+                role="menuitem"
+                onClick={() => {
+                  onSelect(tag);
+                  setOpen(false);
+                }}
+              >
+                {tag}
+              </button>
+            </li>
+          ))}
         </ul>
       )}
     </div>

@@ -1,47 +1,62 @@
-.pagination {
+.wrapper {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 4px;
-  margin: 16px 0;
-  list-style: none;
+  margin: 24px 0 8px;
+}
+
+/* Кнопки з номерами */
+.page {
+  min-width: 40px;
+  height: 40px;
   padding: 0;
-  margin: 0;
-}
-
-.pagination li {
-  border: 1px solid #dee2e6;
   border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #1677ff;
+  font-size: 14px;
   cursor: pointer;
-  min-width: 36px;
-  height: 36px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.pagination li a {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  text-decoration: none;
-  color: #0d6efd;
-  font-size: 14px;
+  transition: all 0.2s ease-in-out;
 }
 
-.pagination li:hover {
-  background-color: #e9ecef;
+.page:hover {
+  background-color: #f5f7fa;
 }
 
-.pagination li.active:hover {
-  background-color: #0d6efd;
-}
-
+/* Активна сторінка — синій фон, білий текст */
 .active {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: #1677ff;
+  border-color: #1677ff;
+  color: #ffffff;
 }
 
-.active a {
-  color: #fff !important;
-  font-weight: 500;
+/* Стрілки */
+.navButton {
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  color: #1677ff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.navButton:hover:not(:disabled) {
+  background-color: #f5f7fa;
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: default;
 }

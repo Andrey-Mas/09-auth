@@ -2,52 +2,64 @@
 
 import css from "./Pagination.module.css";
 
-export default function Pagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (p: number) => void;
-}) {
-  if (totalPages <= 1) return null;
+type Props = {
+  page: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onPageChange: (page: number) => void;
+};
 
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const canPrev = currentPage > 1;
-  const canNext = currentPage < totalPages;
+export default function Pagination({
+  page,
+  hasPrev,
+  hasNext,
+  onPageChange,
+}: Props) {
+  // Якщо немає ніякої навігації — не показуємо
+  if (!hasPrev && !hasNext && page <= 1) return null;
+
+  const goTo = (next: number) => {
+    if (next === page || next < 1) return;
+    onPageChange(next);
+  };
+
+  // Вікно з 5 сторінок навколо поточної
+  const pages: number[] = [];
+  const start = Math.max(1, page - 2);
+  for (let p = start; p < start + 5; p += 1) {
+    if (p >= 1) pages.push(p);
+  }
 
   return (
-    <ul className={css.pagination}>
-      <li
-        className={!canPrev ? `${css.disabled}` : undefined}
-        onClick={() => canPrev && onPageChange(currentPage - 1)}
-        role="button"
-        aria-label="Previous page"
+    <div className={css.wrapper}>
+      <button
+        type="button"
+        className={css.navButton}
+        onClick={() => goTo(page - 1)}
+        disabled={!hasPrev}
       >
-        <a>‹</a>
-      </li>
+        ‹
+      </button>
 
       {pages.map((p) => (
-        <li
+        <button
           key={p}
-          className={p === currentPage ? `${css.active}` : undefined}
-          onClick={() => onPageChange(p)}
-          role="button"
-          aria-current={p === currentPage ? "page" : undefined}
+          type="button"
+          className={`${css.page} ${p === page ? css.active : ""}`}
+          onClick={() => goTo(p)}
         >
-          <a>{p}</a>
-        </li>
+          {p}
+        </button>
       ))}
 
-      <li
-        className={!canNext ? `${css.disabled}` : undefined}
-        onClick={() => canNext && onPageChange(currentPage + 1)}
-        role="button"
-        aria-label="Next page"
+      <button
+        type="button"
+        className={css.navButton}
+        onClick={() => goTo(page + 1)}
+        disabled={!hasNext}
       >
-        <a>›</a>
-      </li>
-    </ul>
+        ›
+      </button>
+    </div>
   );
 }

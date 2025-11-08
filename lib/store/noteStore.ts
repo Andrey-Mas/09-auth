@@ -2,12 +2,12 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { BackendTag } from "@/types/note";
+import type { Tag } from "@/types/note";
 
 export const initialDraft = {
   title: "",
   content: "",
-  tag: "Todo" as BackendTag,
+  tag: "Todo" as Tag,
 };
 
 type Draft = typeof initialDraft;

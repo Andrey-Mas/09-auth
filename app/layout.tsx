@@ -1,55 +1,27 @@
-// app/layout.tsx
 import type { ReactNode } from "react";
-import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
-import Providers from "./providers";
-import Header from "../components/Header/Header";
-import Footer from "../components/Footer/Footer";
+import Header from "@/components/Header/Header";
+import Footer from "@/components/Footer/Footer";
+import TanStackProvider from "@/components/TanStackProvider/TanStackProvider";
+import AuthProvider from "@/components/AuthProvider/AuthProvider";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "NoteHub",
-  description: "Notes app with filters & modals",
-  openGraph: {
-    title: "NoteHub",
-    description: "Notes app with filters & modals",
-    url: siteUrl,
-    images: [
-      {
-        url: "https://ac.goit.global/fullstack/react/notehub-og-meta.jpg",
-      },
-    ],
-  },
+  description:
+    "NoteHub is a simple and efficient application designed for managing personal notes. It helps keep your thoughts organized and accessible in one place, whether you are at home or on the go.",
 };
 
-const roboto = Roboto({
-  weight: ["400","500","700"],
-  subsets: ["latin"],
-  variable: "--font-roboto",
-  display: "swap",
-});
-
-export default function RootLayout({
-  children,
-  modal,
-}: {
-  children: ReactNode;
-  modal: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={roboto.variable}>
-      <body
-        style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
-      >
-        <Providers>
-          <Header />
-          <main style={{ flex: 1 }}>{children}</main>
-          <Footer />
-          {modal}{" "}
-          {/* важливо: модалки теж всередині провайдера, бо в них useQuery */}
-        </Providers>
+    <html lang="en">
+      <body>
+        <TanStackProvider>
+          <AuthProvider>
+            <Header />
+            {children}
+            <Footer />
+          </AuthProvider>
+        </TanStackProvider>
       </body>
     </html>
   );

@@ -1,29 +1,51 @@
 // types/note.ts
-export type BackendTag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
-export type UITag = "All" | BackendTag;
+
+export type Tag =
+  | "Todo"
+  | "Work"
+  | "Personal"
+  | "Meeting"
+  | "Shopping"
+  | "Ideas"
+  | "Travel"
+  | "Finance"
+  | "Health"
+  | "Important";
 
 export interface Note {
   id: string;
   title: string;
   content: string;
-  tag: BackendTag;
-  createdAt?: string;
-  updatedAt?: string;
+  tag: Tag;
 }
 
-export interface FetchNotesResponse {
-  items: Note[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export const TAGS_UI: UITag[] = [
+// для Sidebar / селектів (включає "All")
+export const TAGS_UI = [
   "All",
   "Todo",
   "Work",
   "Personal",
   "Meeting",
   "Shopping",
+  "Ideas",
+  "Travel",
+  "Finance",
+  "Health",
+  "Important",
+] as const;
+
+// тегі саме нотаток (без "All") — те, що чекали старі компоненти
+export const ALLOWED_TAGS: Tag[] = [
+  "Todo",
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+  "Ideas",
+  "Travel",
+  "Finance",
+  "Health",
+  "Important",
 ];
+
+export type UITag = (typeof TAGS_UI)[number];
