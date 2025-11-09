@@ -1,14 +1,15 @@
 import { fetchNoteById } from "@/lib/api/serverApi";
-import ViewNoteModal from "@/components/ViewNoteModal/ViewNoteModal";
+import NotePreviewClient from "./NotePreview.client";
 
-type Props = {
-  params: { id: string };
-};
+type Params = Promise<{ id: string }>;
 
-export default async function NotesIdModalPage({ params }: Props) {
-  const note = await fetchNoteById(params.id);
+export default async function NotePreviewPage({ params }: { params: Params }) {
+  const { id } = await params;
+  const note = await fetchNoteById(id);
 
-  if (!note) return null;
+  if (!note) {
+    return null; // можна вивести щось типу "Note not found"
+  }
 
-  return <ViewNoteModal note={note} />;
+  return <NotePreviewClient note={note} />;
 }

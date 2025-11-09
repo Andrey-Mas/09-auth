@@ -1,26 +1,24 @@
 import { fetchNoteById } from "@/lib/api/serverApi";
-import css from "./page.module.css";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
+import getQueryClient from "@/lib/getQueryClient";
+import NoteDetailsClient from "./NoteDetails.client";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export default async function NotePage({ params }: Props) {
-  const note = await fetchNoteById(params.id);
+export default async function NoteDetailsPage({ params }: Props) {
+  const { id } = await params;
 
-  if (!note) {
-    return (
-      <main className={css.main}>
-        <p>Note not found.</p>
-      </main>
-    );
-  }
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["note", id],
+    queryFn: () => fetchNoteById(id),
+  });
 
   return (
-    <main className={css.main}>
-      <h1 className={css.title}>{note.title}</h1>
-      <p className={css.tag}>{note.tag}</p>
-      <p className={css.content}>{note.content}</p>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NoteDetailsClient noteId={id} />
+    </HydrationBoundary>
   );
 }

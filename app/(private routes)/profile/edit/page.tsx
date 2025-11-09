@@ -1,83 +1,107 @@
+// app/(private routes)/profile/edit/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getMe, updateMe } from "@/lib/api/clientApi";
+
+import { getMe, updateMe } from "@/lib/api/clientApi"; // або serverApi+clientApi, як у тебе організовано
+import { useAuthStore } from "@/lib/store/authStore";
 import type { User } from "@/types/user";
+
 import css from "./page.module.css";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const setUser = useAuthStore((state) => state.setUser);
+
+  const [user, setUserState] = useState<User | null>(null);
   const [username, setUsername] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
 
+  // підтягуємо поточного юзера при монтуванні
   useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
+    (async () => {
       try {
         const me = await getMe();
-        if (!cancelled) {
-          setUser(me);
-          setUsername(me?.username || "");
+        if (me) {
+          setUserState(me);
+          setUsername(me.username || "");
         }
       } catch {
-        if (!cancelled) setError("Failed to load profile");
-      } finally {
-        if (!cancelled) setLoading(false);
+        setError("Failed to load profile data");
       }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
+    })();
   }, []);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username.trim()) {
-      setError("Username is required");
-      return;
-    }
+    if (!user) return;
+
+    setError("");
+    setIsSubmitting(true);
 
     try {
-      setError("");
-      await updateMe({ username: username.trim() });
-      router.push("/profile");
-    } catch (err) {
-      setError((err as Error).message || "Failed to update profile");
-    }
-  }
+      const updated = await updateMe({ username: username.trim() });
 
-  if (loading) {
+      // 🔴 ключова зміна: оновлюємо глобальний auth store
+      setUser(updated);
+
+      // і тільки після цього переходимо назад на /profile
+      router.push("/profile");
+      router.refresh();
+    } catch (err) {
+      setError(
+        (err as Error).message || "Failed to update profile. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    router.back();
+  };
+
+  if (!user && !error) {
     return (
       <main className={css.mainContent}>
-        <div className={css.profileCard}>Loading...</div>
+        <div className={css.profileCard}>
+          <h1 className={css.formTitle}>Edit Profile</h1>
+          <p>Loading...</p>
+        </div>
       </main>
     );
   }
 
-  const avatarSrc =
-    user?.avatar || "https://ac.goit.global/img/photo-placeholder.jpg";
+  if (error && !user) {
+    return (
+      <main className={css.mainContent}>
+        <div className={css.profileCard}>
+          <h1 className={css.formTitle}>Edit Profile</h1>
+          <p className={css.error}>{error}</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className={css.mainContent}>
       <div className={css.profileCard}>
         <h1 className={css.formTitle}>Edit Profile</h1>
 
-        <Image
-          src={avatarSrc}
-          alt="User Avatar"
-          width={120}
-          height={120}
-          className={css.avatar}
-        />
+        {user && (
+          <Image
+            src={user.avatar}
+            alt="User Avatar"
+            width={120}
+            height={120}
+            className={css.avatar}
+          />
+        )}
 
-        <form className={css.profileInfo} onSubmit={onSubmit}>
+        <form className={css.profileInfo} onSubmit={handleSubmit}>
           <div className={css.usernameWrapper}>
             <label htmlFor="username">Username:</label>
             <input
@@ -86,19 +110,25 @@ export default function EditProfilePage() {
               className={css.input}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required
             />
           </div>
 
-          <p>Email: {user?.email ?? "user_email@example.com"}</p>
+          <p>Email: {user?.email}</p>
 
           <div className={css.actions}>
-            <button type="submit" className={css.saveButton}>
-              Save
+            <button
+              type="submit"
+              className={css.saveButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
             <button
               type="button"
               className={css.cancelButton}
-              onClick={() => router.back()}
+              onClick={handleCancel}
+              disabled={isSubmitting}
             >
               Cancel
             </button>
