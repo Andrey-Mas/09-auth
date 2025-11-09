@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { ReactNode } from "react";
 import "./globals.css";
 import Header from "@/components/Header/Header";
@@ -11,7 +12,12 @@ export const metadata = {
     "NoteHub is a simple and efficient application designed for managing personal notes. It helps keep your thoughts organized and accessible in one place, whether you are at home or on the go.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+type RootLayoutProps = {
+  children: ReactNode;
+  modal: ReactNode; // слот для @modal (Next завжди щось сюди прокине, навіть default)
+};
+
+export default function RootLayout({ children, modal }: RootLayoutProps) {
   return (
     <html lang="en">
       <body>
@@ -19,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AuthProvider>
             <Header />
             {children}
+            {modal}
             <Footer />
           </AuthProvider>
         </TanStackProvider>
