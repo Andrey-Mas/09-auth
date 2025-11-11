@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { fetchNotes } from "@/lib/api/serverApi";
-import NotesClient from "@/components/NotesClient/NotesClient";
+import FilteredNotesClient from "@/app/(private routes)/notes/filter/[...slug]/Notes.client";
 import type { UITag } from "@/types/note";
 import css from "./page.module.css";
 
@@ -34,11 +34,10 @@ export default async function NotesPage({
 
   return (
     <main className={css.main}>
-      <NotesClient
+      <FilteredNotesClient
         initialNotes={initialNotes}
         initialPage={page}
         initialSearch={search}
-        initialTag={tag}
         perPage={perPage}
       />
     </main>

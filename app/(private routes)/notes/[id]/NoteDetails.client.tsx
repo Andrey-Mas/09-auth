@@ -1,33 +1,41 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 import { fetchNoteById } from "@/lib/api/clientApi";
 import type { Note } from "@/types/note";
+import css from "./page.module.css";
 
 type Props = {
-  noteId?: string;
+  id: string;
 };
 
-export default function NoteDetailsClient({ noteId }: Props) {
-  const params = useParams();
-  const id = noteId || (params?.id as string);
-
-  const { data, isLoading, isError } = useQuery<Note>({
+export default function NoteDetailsClient({ id }: Props) {
+  const {
+    data: note,
+    isLoading,
+    isError,
+  } = useQuery<Note | null>({
     queryKey: ["note", id],
     queryFn: () => fetchNoteById(id),
-    enabled: !!id,
   });
 
-  if (!id) return <p>Note ID is missing</p>;
-  if (isLoading) return <p>Loading...</p>;
-  if (isError || !data) return <p>Note not found</p>;
+  if (isLoading) {
+    return <p className={css.infoText}>Loading note...</p>;
+  }
+
+  if (isError || !note) {
+    return <p className={css.errorText}>Failed to load note.</p>;
+  }
 
   return (
-    <div>
-      <h2>{data.title}</h2>
-      <p>{data.content}</p>
-      <p>{data.tag}</p>
-    </div>
+    <main className={css.mainContent}>
+      <article className={css.noteCard}>
+        <h1 className={css.title}>{note.title}</h1>
+        <p className={css.meta}>
+          <span className={css.tag}>{note.tag}</span>
+        </p>
+        <p className={css.content}>{note.content}</p>
+      </article>
+    </main>
   );
 }

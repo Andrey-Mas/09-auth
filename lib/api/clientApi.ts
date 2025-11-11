@@ -67,10 +67,23 @@ export async function fetchNotes({
   return [];
 }
 
-export async function fetchNoteById(id: string): Promise<Note> {
-  if (!id) throw new Error("Note id is required");
-  const res = await api.get(`/notes/${encodeURIComponent(id)}`);
-  return res.data as Note;
+export async function fetchNoteById(id: string): Promise<Note | null> {
+  if (!id) return null;
+
+  const res = await api.get(`/notes/${encodeURIComponent(id)}`, {
+    validateStatus: () => true,
+  });
+
+  if (res.status !== 200) {
+    throw new Error(getErrorMessage(res.data, "Failed to load note"));
+  }
+
+  const data = res.data;
+
+  if (!data) return null;
+  if ((data as any).note) return (data as any).note as Note;
+
+  return data as Note;
 }
 
 export async function createNote(payload: CreateNotePayload): Promise<Note> {

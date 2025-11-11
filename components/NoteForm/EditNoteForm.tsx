@@ -4,88 +4,88 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateNote } from "@/lib/api/clientApi";
-import type { Note, Tag } from "@/types/note";
-import { ALLOWED_TAGS } from "@/types/note";
+import type { Tag } from "@/types/note";
 import css from "./NoteForm.module.css";
 
 type Props = {
-  note: Note;
+  id: string;
+  initialTitle: string;
+  initialContent: string;
+  initialTag: Tag;
 };
 
-export default function EditNoteForm({ note }: Props) {
+export default function EditNoteForm({
+  id,
+  initialTitle,
+  initialContent,
+  initialTag,
+}: Props) {
   const router = useRouter();
   const qc = useQueryClient();
 
-  const [title, setTitle] = useState(note.title);
-  const [content, setContent] = useState(note.content);
-  const [tag, setTag] = useState<Tag>(note.tag);
+  const [title, setTitle] = useState(initialTitle);
+  const [content, setContent] = useState(initialContent);
+  const [tag, setTag] = useState<Tag>(initialTag);
   const [error, setError] = useState("");
 
   const mutation = useMutation({
     mutationFn: () =>
-      updateNote(note.id, {
-        title: title.trim(),
-        content: content.trim(),
-        tag,
-      }),
+      updateNote(id, { title: title.trim(), content: content.trim(), tag }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notes"] });
-      router.push("/notes");
+      qc.invalidateQueries({ queryKey: ["note", id] });
+      router.back();
     },
     onError: (err: any) => {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to update note. Please try again.",
-      );
+      setError(err?.message || "Failed to update note");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!title.trim() || !content.trim()) {
       setError("All fields are required");
       return;
     }
 
-    setError("");
     mutation.mutate();
-  };
-
-  const handleCancel = () => {
-    router.push("/notes");
   };
 
   return (
     <form className={css.form} onSubmit={handleSubmit}>
-      <div className={css.row}>
-        <input
-          className={css.input}
-          type="text"
-          placeholder="Note title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+      <h2 className={css.title}>Edit note</h2>
 
-        <select
-          className={css.select}
-          value={tag}
-          onChange={(e) => setTag(e.target.value as Tag)}
-        >
-          {ALLOWED_TAGS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </div>
+      <input
+        className={css.input}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Note title"
+      />
+
+      <select
+        className={css.select}
+        value={tag}
+        onChange={(e) => setTag(e.target.value as Tag)}
+      >
+        <option value="Todo">Todo</option>
+        <option value="Work">Work</option>
+        <option value="Personal">Personal</option>
+        <option value="Meeting">Meeting</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Ideas">Ideas</option>
+        <option value="Travel">Travel</option>
+        <option value="Finance">Finance</option>
+        <option value="Health">Health</option>
+        <option value="Important">Important</option>
+      </select>
 
       <textarea
         className={css.textarea}
-        placeholder="Note content"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        placeholder="Note content"
       />
 
       {error && <p className={css.error}>{error}</p>}
@@ -93,18 +93,18 @@ export default function EditNoteForm({ note }: Props) {
       <div className={css.actions}>
         <button
           type="button"
-          className={css.cancelButton}
-          onClick={handleCancel}
+          className={css.secondary}
+          onClick={() => router.back()}
           disabled={mutation.isPending}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className={css.submitButton}
+          className={css.primary}
           disabled={mutation.isPending}
         >
-          {mutation.isPending ? "Saving..." : "Save"}
+          Save
         </button>
       </div>
     </form>

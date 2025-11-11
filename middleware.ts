@@ -16,16 +16,11 @@ export async function middleware(request: NextRequest) {
   const accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
-  let isAuthenticated = false;
+  let isAuthenticated = Boolean(accessToken);
   let response: NextResponse | null = null;
 
-  // 1. Якщо є accessToken — вважаємо користувача авторизованим
-  if (accessToken) {
-    isAuthenticated = true;
-  }
-
-  // 2. Якщо accessToken немає, але є refreshToken — пробуємо оновити сесію
-  if (!accessToken && refreshToken) {
+  // Якщо немає accessToken, але є refreshToken — пробуємо перевірити/оновити сесію
+  if (!isAuthenticated && refreshToken) {
     const cookieHeader = request.headers.get("cookie") ?? "";
 
     try {
@@ -34,37 +29,33 @@ export async function middleware(request: NextRequest) {
       if (session.ok && session.data) {
         isAuthenticated = true;
 
-        // Якщо бекенд повернув оновлені куки — прокидуємо їх далі
         const setCookie = session.headers["set-cookie"];
         if (setCookie) {
           response = NextResponse.next();
-          // важливо: не чіпаємо інші заголовки, просто додаємо set-cookie
-          response.headers.set("set-cookie", setCookie);
+          // додаємо set-cookie, якщо бек оновив токени
+          response.headers.append("set-cookie", setCookie);
         }
       }
     } catch {
-      // якщо впало — просто вважатимемо, що не авторизований
       isAuthenticated = false;
     }
   }
 
-  // 3. Захист приватних маршрутів
+  // Приватні маршрути доступні тільки авторизованим
   if (isPrivateRoute && !isAuthenticated) {
     const url = new URL("/sign-in", request.url);
     return NextResponse.redirect(url);
   }
 
-  // 4. Якщо користувач вже залогінений — не пускаємо на /sign-in /sign-up
+  // Якщо вже авторизований — не пускаємо на сторінки логіну/реєстрації
   if (isAuthRoute && isAuthenticated) {
     const url = new URL("/profile", request.url);
     return NextResponse.redirect(url);
   }
 
-  // 5. За замовчуванням — йдемо далі (з урахуванням можливого set-cookie)
   return response ?? NextResponse.next();
 }
 
-// Обмежуємо дію middleware тільки потрібними маршрутами
 export const config = {
   matcher: ["/profile/:path*", "/notes/:path*", "/sign-in", "/sign-up"],
 };

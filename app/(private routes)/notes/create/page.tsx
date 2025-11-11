@@ -1,9 +1,7 @@
+"use client";
+
 import CreateNoteModal from "@/components/CreateNoteModal/CreateNoteModal";
 
-export default function CreateNotePage() {
-  return (
-    <main>
-      <CreateNoteModal from="/notes" />
-    </main>
-  );
+export default function NotesCreatePage() {
+  return <CreateNoteModal from="/notes" />;
 }

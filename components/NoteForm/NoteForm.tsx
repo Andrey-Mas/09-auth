@@ -1,63 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { createNote } from "@/lib/api/clientApi";
 import type { Tag } from "@/types/note";
-import { ALLOWED_TAGS } from "@/types/note";
+import { useNoteDraftStore } from "@/lib/store/noteDraftStore";
+
 import css from "./NoteForm.module.css";
 
-type Props = {
-  onCreate: (payload: {
-    title: string;
-    content: string;
-    tag: Tag;
-  }) => void | Promise<void>;
-  isSubmitting?: boolean;
-};
+const TAGS: Tag[] = [
+  "Todo",
+  "Work",
+  "Personal",
+  "Meeting",
+  "Shopping",
+  "Ideas",
+  "Travel",
+  "Finance",
+  "Health",
+  "Important",
+];
 
-export default function NoteForm({ onCreate, isSubmitting }: Props) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tag, setTag] = useState<Tag>("Todo");
+export default function NoteForm() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { title, content, tag, setField, reset } = useNoteDraftStore();
+
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const mutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      // оновлюємо список нотаток
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      // чистимо чернетку
+      reset();
+      // повертаємось до списку
+      router.push("/notes");
+    },
+    onError: (err: unknown) => {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to create note");
+      } else {
+        setError("Failed to create note");
+      }
+    },
+  });
 
-    if (!title.trim() || !content.trim()) {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (!trimmedTitle || !trimmedContent) {
       setError("All fields are required");
       return;
     }
 
-    setError("");
-
-    await onCreate({
-      title: title.trim(),
-      content: content.trim(),
+    mutation.mutate({
+      title: trimmedTitle,
+      content: trimmedContent,
       tag,
     });
+  };
 
-    setTitle("");
-    setContent("");
-    setTag("Todo");
+  const handleCancel = () => {
+    router.back();
   };
 
   return (
-    <form id="note-form" className={css.form} onSubmit={handleSubmit}>
-      <div className={css.row}>
+    <form className={css.form} onSubmit={handleSubmit}>
+      <div className={css.formGroup}>
+        <label htmlFor="title">Note title</label>
         <input
-          className={css.input}
+          id="title"
+          name="title"
           type="text"
-          placeholder="Note title"
+          className={css.input}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => setField("title", e.target.value)}
+          disabled={mutation.isPending}
+          required
         />
+      </div>
 
+      <div className={css.formGroup}>
+        <label htmlFor="tag">Tag</label>
         <select
+          id="tag"
+          name="tag"
           className={css.select}
           value={tag}
-          onChange={(e) => setTag(e.target.value as Tag)}
+          onChange={(e) => setField("tag", e.target.value)}
+          disabled={mutation.isPending}
+          required
         >
-          {ALLOWED_TAGS.map((t) => (
+          {TAGS.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
@@ -65,22 +108,40 @@ export default function NoteForm({ onCreate, isSubmitting }: Props) {
         </select>
       </div>
 
-      <textarea
-        className={css.textarea}
-        placeholder="Note content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-      />
+      <div className={css.formGroup}>
+        <label htmlFor="content">Note content</label>
+        <textarea
+          id="content"
+          name="content"
+          className={css.textarea}
+          rows={5}
+          value={content}
+          onChange={(e) => setField("content", e.target.value)}
+          disabled={mutation.isPending}
+          required
+        />
+      </div>
 
       {error && <p className={css.error}>{error}</p>}
 
-      <button
-        type="submit"
-        className={css.submitButton}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? "Creating..." : "Add note"}
-      </button>
+      <div className={css.actions}>
+        <button
+          type="submit"
+          className={css.submitButton}
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Saving..." : "Create note"}
+        </button>
+
+        <button
+          type="button"
+          className={css.cancelButton}
+          onClick={handleCancel}
+          disabled={mutation.isPending}
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }

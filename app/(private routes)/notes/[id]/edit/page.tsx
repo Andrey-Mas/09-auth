@@ -1,25 +1,41 @@
+// app/(private routes)/notes/[id]/edit/page.tsx
 import { fetchNoteById } from "@/lib/api/serverApi";
-import EditNoteModal from "@/components/EditNoteModal/EditNoteModal";
+import EditNoteForm from "@/components/NoteForm/EditNoteForm";
+import type { Metadata } from "next";
 
-type Props = {
-  params: { id: string };
-};
+type Params = Promise<{ id: string }>;
+type PageProps = { params: Params };
 
-export default async function EditNotePage({ params }: Props) {
-  const note = await fetchNoteById(params.id);
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    title: `Edit note ${id}`,
+  };
+}
+
+export default async function EditNotePage({ params }: PageProps) {
+  const { id } = await params;
+
+  const note = await fetchNoteById(id);
 
   if (!note) {
     return (
-      <main>
-        <p>Note not found.</p>
+      <main className="container">
+        <h1>Note not found</h1>
       </main>
     );
   }
 
-  // Повноекранний варіант редагування
   return (
-    <main>
-      <EditNoteModal note={note} from="/notes" />
+    <main className="container">
+      <EditNoteForm
+        id={note.id}
+        initialTitle={note.title}
+        initialContent={note.content}
+        initialTag={note.tag}
+      />
     </main>
   );
 }
