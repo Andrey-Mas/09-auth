@@ -20,8 +20,8 @@ import Pagination from "@/components/Pagination/Pagination";
 import css from "./NotesClient.module.css";
 
 type Props = {
-  initialNotes: Note[];
-  initialPage: number;
+  initialNotes: Note[]; // приходять з батьківського компонента,
+  initialPage: number; // але в useQuery їх більше не кладемо
   initialSearch: string;
   perPage: number;
 };
@@ -101,9 +101,10 @@ export default function FilteredNotesClient({
         page,
         perPage,
         search: debouncedSearch,
-        tag: tag === "All" ? undefined : tag,
+        // ✅ завжди явно передаємо tag
+        // "All" конвертуємо в "all", який API сприймає як "не фільтрувати за тегом"
+        tag: tag === "All" ? "all" : tag,
       }),
-    initialData: initialNotes,
   });
 
   // гарантовано масив для подальшої роботи
@@ -140,7 +141,7 @@ export default function FilteredNotesClient({
         <p className={css.errorText}>Failed to load notes. Please try again.</p>
       )}
 
-      {!isLoading && !notes.length && (
+      {!isLoading && !isError && notes.length === 0 && (
         <p className={css.infoText}>No notes found.</p>
       )}
 

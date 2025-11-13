@@ -34,11 +34,8 @@ export default function NoteList({ notes }: Props) {
   return (
     <ul className={`${css.list} ${css.grid}`}>
       {notes.map((note) => {
-        const id =
-          (note as any).id ||
-          (note as any)._id ||
-          (note as any).noteId ||
-          String(note.id);
+        // ✅ типобезпечний id
+        const id = note.id;
 
         return (
           <li key={id} className={css.card}>
