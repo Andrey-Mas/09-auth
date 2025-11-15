@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  usePathname,
-  useRouter,
-  useSearchParams,
-  useParams,
-} from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchNotes } from "@/lib/api/clientApi";
 import type { Note, Tag } from "@/types/note";
+import { ALLOWED_TAGS } from "@/types/note";
 
 import SearchBox from "@/components/SearchBox/SearchBox";
 import NoteList from "@/components/NoteList/NoteList";
@@ -20,27 +16,13 @@ import Pagination from "@/components/Pagination/Pagination";
 import css from "./NotesClient.module.css";
 
 type Props = {
-  initialNotes: Note[]; // приходять з батьківського компонента,
-  initialPage: number; // але в useQuery їх більше не кладемо
+  initialNotes: Note[];
+  initialPage: number;
   initialSearch: string;
   perPage: number;
 };
 
-const ALLOWED_TAGS: Tag[] = [
-  "Todo",
-  "Work",
-  "Personal",
-  "Meeting",
-  "Shopping",
-  "Ideas",
-  "Travel",
-  "Finance",
-  "Health",
-  "Important",
-];
-
 export default function FilteredNotesClient({
-  initialNotes,
   initialPage,
   initialSearch,
   perPage,
@@ -48,25 +30,33 @@ export default function FilteredNotesClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { slug } = useParams<{ slug: string[] }>();
-
-  // тег з URL
-  const rawTag = Array.isArray(slug) && slug.length > 0 ? slug[0] : "All";
-  const tag: Tag | "All" = (ALLOWED_TAGS as string[]).includes(rawTag)
-    ? (rawTag as Tag)
-    : "All";
 
   const [page, setPage] = useState(initialPage || 1);
   const [search, setSearch] = useState(initialSearch || "");
   const [debouncedSearch, setDebouncedSearch] = useState(initialSearch || "");
 
-  // debounce для пошуку
+  const rawTagParam = searchParams.get("tag");
+
+  const uiTag: Tag | "All" = useMemo(() => {
+    if (!rawTagParam || rawTagParam === "all") {
+      return "All";
+    }
+
+    if ((ALLOWED_TAGS as string[]).includes(rawTagParam)) {
+      return rawTagParam as Tag;
+    }
+
+    return "All";
+  }, [rawTagParam]);
+
+  const apiTag = uiTag === "All" ? "all" : uiTag;
+
   useEffect(() => {
     const id = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(id);
   }, [search]);
 
-  // синхронізація стану з URL
+  // ✅ Синхронізуємо page + search з URL, НЕ чіпаючи tag
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -86,12 +76,11 @@ export default function FilteredNotesClient({
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch]);
 
   const queryKey = useMemo(
-    () => ["notes", { page, perPage, search: debouncedSearch, tag }],
-    [page, perPage, debouncedSearch, tag],
+    () => ["notes", { page, perPage, search: debouncedSearch, tag: apiTag }],
+    [page, perPage, debouncedSearch, apiTag],
   );
 
   const { data, isLoading, isError } = useQuery<Note[]>({
@@ -101,23 +90,21 @@ export default function FilteredNotesClient({
         page,
         perPage,
         search: debouncedSearch,
-        // ✅ завжди явно передаємо tag
-        // "All" конвертуємо в "all", який API сприймає як "не фільтрувати за тегом"
-        tag: tag === "All" ? "all" : tag,
+        tag: apiTag,
       }),
   });
 
-  // гарантовано масив для подальшої роботи
   const notes = data ?? [];
   const hasMore = notes.length === perPage;
 
   return (
     <div className={css.app}>
       <div className={css.toolbar}>
-        <h1 className={css.title}>Notes — {tag === "All" ? "All" : tag}</h1>
+        <h1 className={css.title}>Notes — {uiTag === "All" ? "All" : uiTag}</h1>
 
+        {/* ✅ Виправлений шлях: /notes/action/create */}
         <Link
-          href="/notes/create"
+          href="/notes/action/create"
           prefetch={false}
           className={css.createButton}
         >
